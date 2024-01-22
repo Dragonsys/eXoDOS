@@ -1,0 +1,165 @@
+diff --git a/Setup eXoDOS.bat b/Setup eXoDOS.bat
+index afc210a..fb1543f 100644
+--- a/Setup eXoDOS.bat	
++++ b/Setup eXoDOS.bat	
+@@ -1,3 +1,8 @@
++:main
++set gamecnt=0
++@for %%A in (.\eXo\eXoDOS\^!*.zip) do set /a gamecnt+=1
++exolite=false
++if %gamecnt% LEQ 7000 set exolite=true
+ set cnt=0
+ set multi=false
+ set content=false
+@@ -562,13 +567,43 @@ cls
+ if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=false aspect=true .\emulators\dosbox\options.conf
+ if exist ".\util\ANO.SEL" del ".\util\ANO.SEL"
+ echo > ".\util\AYES.SEL"
+-goto ini
++goto nas
+ 
+ :aspectN
+ cls
+ if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=true aspect=false .\emulators\dosbox\options.conf
+ if exist ".\util\AYES.SEL" del ".\util\AYES.SEL"
+ echo > ".\util\ANO.SEL"
++goto nas
++
++:nas
++if %exolite%==true (
++	cls
++	echo.
++	echo Would you like to enable downloading from a network share instead of torrent?
++	echo.
++	echo Choosing Yes will attempt to set a network share location for the full eXoDOS
++	echo location, to use for downloading games form instead of using the torrent, when
++	echo eXoDOS Lite is installed and the game has not yet been downloaded.
++	echo.
++	echo Choosing No will leave the default of using torrent downloads.
++	echo.
++	.\util\choice /C:YN /N [Y]es or [N]o
++
++	If errorlevel = 2 goto nasN
++	If errorlevel = 1 goto nasY
++)
++goto nasN
++
++:nasY
++cls
++set /P naspath=Enter Full Network Share Path: 
++echo %naspath% > ".\util\nas.conf"
++goto ini
++
++:nasN
++cls
++if exist ".\util\nas.conf" del ".\util\nas.conf"
+ goto ini
+ 
+ :ini
+@@ -606,4 +641,4 @@ echo URL=%CD%\LaunchBox.exe >> "%userprofile%\Desktop\exoDOS.url"
+ echo IconFile=%CD%\eXo\util\exodos.ico >> "%userprofile%\Desktop\eXoDOS.url"
+ echo IconIndex=0 >> "%userprofile%\Desktop\eXoDOS.url"
+ 
+-:end
+\ No newline at end of file
++:end
+diff --git a/install.bat b/install.bat
+index b6241a9..cd7ec74 100644
+--- a/install.bat
++++ b/install.bat
+@@ -1,7 +1,8 @@
+ cd %FOLDER%
+ @echo off 
+ set CONF=%CD%
+ set RESTORE=NO
++set nasconf=.\util\nas.conf
+ for %%I in (.) do set GameDir=%%~nxI
+ for %%f in (*^).bat) do set GameName2=%%f
+ set GameName=%GameName2:~0,-4%
+@@ -98,6 +99,17 @@ If errorlevel = 2 goto end
+ If errorlevel = 1 goto download
+ 
+ :download
++IF EXIST %nasconf% goto nas
++goto torrent
++
++:nas
++set /p naspath=<%nasconf%
++call :trim %naspath% naspath
++copy "%naspath%\eXo\eXoDOS\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
++copy "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
++goto extract
++
++:torrent
+ tasklist /FI "IMAGENAME eq aria2c.exe" 2>NUL | find /I /N "aria2c.exe">NUL
+ if "%ERRORLEVEL%"=="0" goto inprogress
+ 
+@@ -116,11 +128,13 @@ del *.torrent
+ cd ..
+ move ".\download\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
+ move ".\download\GAMEDATA\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
++rd DOWNLOAD /S /Q
++goto extract
++
++:extract
+ cd ..
+ .\eXo\util\unzip -o ".\Content\GameData\eXoDOS\%GameName%.zip" -d .\
+-cd exo
+-rd DOWNLOAD /S /Q
+-cd eXoDOS
++cd exo\eXoDOS
+ for %%G in ("%GameName%.zip") do set size=%%~zG
+ if "%size%"=="0" del "%GameName%.zip"
+ cls
+@@ -131,8 +145,10 @@ echo.
+ pause
+ 
+ cd ..
++
+ :next
+ IF EXIST ".\eXoDOS\%GameDir%\" GOTO dele
++
+ :unzip
+ IF NOT EXIST "exodos\%GameName%.zip" goto exit
+ 
+@@ -398,7 +414,28 @@ cd exodos
+ cd ..
+ 
+ :delete
+-rd /q /s ".\eXoDOS\%GameDir%\"
++cmd /c rd /q /s ".\eXoDOS\%GameDir%\"
++IF EXIST %nasconf% goto rmzip
++goto end
++
++:rmzip
++cls
++echo.
++echo Would you like to delete the game zip files?
++echo.
++echo NOTE: If you choose yes, then the next time you install this game, you will have
++echo to download the files again.
++echo.
++
++.\util\choice /C:YN? /N [Y]es or [N]o
++
++If errorlevel = 2 goto end
++If errorlevel = 1 goto rmzipY
++
++:rmzipY
++cmd /c del /F /Q ".\eXoDOS\%GameName%.zip"
++cmd /c del /F /Q "..\.\Content\GameData\eXoDOS\%GameName%.zip"
++goto end
+ 
+ :end
+ cd eXoDOS
+@@ -413,4 +450,8 @@ echo before starting another one.
+ echo.
+ pause
+ 
+-:exit
+\ No newline at end of file
++:trim
++SET %2=%1
++exit /B
++
++:exit

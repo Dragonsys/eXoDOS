@@ -1,3 +1,8 @@
+:main
+set gamecnt=0
+@for %%A in (.\eXo\eXoDOS\^!*.zip) do set /a gamecnt+=1
+exolite=false
+if %gamecnt% LEQ 5000 set exolite=true
 set cnt=0
 set multi=false
 set content=false
@@ -27,16 +32,16 @@ cd ..
 
 if %content%==false goto keeptruckin
 if %content%==true (
-cls
-echo.
-echo An eXo Project is already set up in this folder and the Media Add-On Pack
-echo has been detected. Do you want to install a full pack, or just add the
-echo Media Add-On Pack?
-echo.
-.\exo\util\choice /C:FM /N [F]ull Install or just the [M]edia Add-On Pack?
-
-if errorlevel = 2 goto mediainstall
-if errorlevel = 1 goto keeptruckin
+	cls
+	echo.
+	echo An eXo Project is already set up in this folder and the Media Add-On Pack
+	echo has been detected. Do you want to install a full pack, or just add the
+	echo Media Add-On Pack?
+	echo.
+	.\exo\util\choice /C:FM /N [F]ull Install or just the [M]edia Add-On Pack?
+	
+	if errorlevel = 2 goto mediainstall
+	if errorlevel = 1 goto keeptruckin
 
 )
 
@@ -105,9 +110,9 @@ if %multi% == true echo This setup will install all eXo projects whose files are
 if %multi% == true echo detected:
 if %multi% == true setlocal EnableDelayedExpansion
 if %multi% == true for %%f in (".\content\^!*.zip") do (
-set pack2=%%f
-set pack=!pack2:~10,-12!
-echo eXo!pack!
+	set pack2=%%f
+	set pack=!pack2:~10,-12!
+	echo eXo!pack!
 )
 if %multi% == true echo.
 if %multi% == true echo If you do not see a pack listed that you wish to merge, please ensure it has been copied to this folder.
@@ -145,69 +150,69 @@ goto a1
 :checks
 setlocal DisableDelayedExpansion
 if not exist .\eXo\util\util*.zip (
-cls
-echo.
-echo ERROR
-echo.
-echo You are missing the util file. This file contains the emulators, along with several
-echo utilities required to run the games included with this pack.
-echo.
-echo The file resides in the .\eXo\util\ folder
-echo Please make sure this file has been downloaded before proceeding with setup.
-echo.
-echo Exiting setup
-pause
-goto end
+	cls
+	echo.
+	echo ERROR
+	echo.
+	echo You are missing the util file. This file contains the emulators, along with several
+	echo utilities required to run the games included with this pack.
+	echo.
+	echo The file resides in the .\eXo\util\ folder
+	echo Please make sure this file has been downloaded before proceeding with setup.
+	echo.
+	echo Exiting setup
+	pause
+	goto end
 )
 
 if %content%==false (
-cls
-echo.
-echo Content Add-On Pack Missing
-echo.
-echo A media content pack is available. This includes magazines, books,
-echo catalogs, and soundtracks. If you wish to add these features, please download
-echo the content pack and ensure the files are in your .\Content\ folder.
-echo.
-echo At that point, run the setup file again and it will detect and add these
-echo features to your install.
-echo.
-pause
-goto GameData
+	cls
+	echo.
+	echo Content Add-On Pack Missing
+	echo.
+	echo A media content pack is available. This includes magazines, books,
+	echo catalogs, and soundtracks. If you wish to add these features, please download
+	echo the content pack and ensure the files are in your .\Content\ folder.
+	echo.
+	echo At that point, run the setup file again and it will detect and add these
+	echo features to your install.
+	echo.
+	pause
+	goto GameData
 )
 
 if %content%==true (
- cls
- echo.
- if not exist .\Content\DOSBooks.zip echo Books Content Add-On Pack:		Missing
- if exist .\Content\DOSBooks.zip echo Books Content Add-On Pack:		Present
- if not exist .\Content\DOSCatalogs.zip echo Catalogs Content Add-On Pack:		Missing
- if exist .\Content\DOSCatalogs.zip echo Catalogs Content Add-On Pack:		Present
- if not exist .\Content\DOSMagazines.zip echo Magazines Content Add-On Pack:		Missing
- if exist .\Content\DOSMagazines.zip echo Magazines Content Add-On Pack:		Present
- if not exist .\Content\DOSSoundtracks.zip echo Soundtracks Content Add-On Pack:	Missing
- if exist .\Content\DOSSoundtracks.zip echo Soundtracks Content Add-On Pack:	Present
- echo.
- echo A media content pack is available. This includes magazines, books,
- echo catalogs, and soundtracks. If you wish to add these features, please download
- echo the content pack and ensure the files are in your .\Content\ folder.
- echo.
- if not exist .\Content\DOSSoundtracks.zip (
- pause
- goto GameData
- )
- if not exist .\Content\DOSCatalogs.zip (
- pause
- goto GameData
- )
- if not exist .\Content\DOSBooks.zip (
- pause
- goto GameData
- )
- if not exist .\Content\DOSMagazines.zip (
- pause
- goto GameData
- )
+	cls
+	echo.
+	if not exist .\Content\DOSBooks.zip echo Books Content Add-On Pack:		Missing
+	if exist .\Content\DOSBooks.zip echo Books Content Add-On Pack:			Present
+	if not exist .\Content\DOSCatalogs.zip echo Catalogs Content Add-On Pack:	Missing
+	if exist .\Content\DOSCatalogs.zip echo Catalogs Content Add-On Pack:		Present
+	if not exist .\Content\DOSMagazines.zip echo Magazines Content Add-On Pack:	Missing
+	if exist .\Content\DOSMagazines.zip echo Magazines Content Add-On Pack:		Present
+	if not exist .\Content\DOSSoundtracks.zip echo Soundtracks Content Add-On Pack:	Missing
+	if exist .\Content\DOSSoundtracks.zip echo Soundtracks Content Add-On Pack:	Present
+	echo.
+	echo A media content pack is available. This includes magazines, books,
+	echo catalogs, and soundtracks. If you wish to add these features, please download
+	echo the content pack and ensure the files are in your .\Content\ folder.
+	echo.
+	if not exist .\Content\DOSSoundtracks.zip (
+		pause
+		goto GameData
+	)
+	if not exist .\Content\DOSCatalogs.zip (
+		pause
+		goto GameData
+	)
+	if not exist .\Content\DOSBooks.zip (
+		pause
+		goto GameData
+	)
+	if not exist .\Content\DOSMagazines.zip (
+		pause
+		goto GameData
+	)
 )
 
 :GameData
@@ -249,19 +254,19 @@ goto end
 
 :lbcheck
 if not exist .\Content\LaunchBox.zip (
-cls
-echo.
-echo ERROR
-echo.
-echo You are missing the LaunchBox.zip file.
-echo Without this, you will have no front end.
-echo.
-echo This file should be in your .\Content\ folder.
-echo.
-echo If you plan to use a different front end or no front end at all, you can choose
-echo to continue.
-echo.
-goto check
+	cls
+	echo.
+	echo ERROR
+	echo.
+	echo You are missing the LaunchBox.zip file.
+	echo Without this, you will have no front end.
+	echo.
+	echo This file should be in your .\Content\ folder.
+	echo.
+	echo If you plan to use a different front end or no front end at all, you can choose
+	echo to continue.
+	echo.
+	goto check
 )
 
 if %multi% == true if not exist .\Content\XO*Metadata.zip goto m2error
@@ -293,7 +298,7 @@ if %multi% == false echo of %name% zip files and a !%name% folder full of config
 if %multi% == true echo of zip files and a folder full of config files and game launch files.
 echo Do not use this method if you aren't 100%% sure of what you are doing.
 echo. 
-.\exo\util\choice /C:YN /N (Y)es or (N)o
+.\exo\util\choice /C:YN /N [Y]es or [N]o
 
 If errorlevel = 2 goto end
 If errorlevel = 1 goto skip
@@ -387,7 +392,7 @@ echo.
 pause
 
 for /F %%a in ('dir .\Content\GameData\ /A:D /B') DO (
-.\eXo\util\unzip -o .\Content\GameData\%%a\*.zip -d .\
+	.\eXo\util\unzip -o .\Content\GameData\%%a\*.zip -d .\
 )
 .\eXo\util\unzip -o .\Content\!*metadata.zip -d .\
 
@@ -418,8 +423,8 @@ del .\util\EXT*.zip
 .\util\unzip -o .\util\util.zip SetConsole.exe -d .\util\
 if not exist .\util\scummvm.ini goto skipsvm
 if not exist %USERPROFILE%\AppData\Roaming\ScummVM\scummvm.ini (
-md %USERPROFILE%\AppData\Roaming\ScummVM
-copy .\util\scummvm.ini %USERPROFILE%\AppData\Roaming\ScummVM\scummvm.ini
+	md %USERPROFILE%\AppData\Roaming\ScummVM
+	copy .\util\scummvm.ini %USERPROFILE%\AppData\Roaming\ScummVM\scummvm.ini
 )
 :skipsvm
 cd ..
@@ -438,7 +443,7 @@ echo will remove them from the front end, but not remove them from your hard dri
 echo.
 echo If they have previously been removed, choosing NO here will restore them in the front end.
 echo. 
-.\eXo\util\choice /C:NY /N (Y)es or (N)o
+.\eXo\util\choice /C:NY /N [Y]es or [N]o
 
 If errorlevel = 2 goto YESA
 If errorlevel = 1 goto NOA
@@ -562,13 +567,43 @@ cls
 if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=false aspect=true .\emulators\dosbox\options.conf
 if exist ".\util\ANO.SEL" del ".\util\ANO.SEL"
 echo > ".\util\AYES.SEL"
-goto ini
+goto nas
 
 :aspectN
 cls
 if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=true aspect=false .\emulators\dosbox\options.conf
 if exist ".\util\AYES.SEL" del ".\util\AYES.SEL"
 echo > ".\util\ANO.SEL"
+goto nas
+
+:nas
+if %exolite%==true (
+	cls
+	echo.
+	echo Would you like to enable downloading from a network share instead of torrent?
+	echo.
+	echo Choosing Yes will attempt to set a network share location for the full eXoDOS
+	echo location, to use for downloading games form instead of using the torrent, when
+	echo eXoDOS Lite is installed and the game has not yet been downloaded.
+	echo.
+	echo Choosing No will leave the default of using torrent downloads.
+	echo.
+	.\util\choice /C:YN /N [Y]es or [N]o
+
+	If errorlevel = 2 goto nasN
+	If errorlevel = 1 goto nasY
+)
+goto nasN
+
+:nasY
+cls
+set /P naspath=Enter Full Network Share Path: 
+echo %naspath% > ".\util\nas.conf"
+goto ini
+
+:nasN
+cls
+if exist ".\util\nas.conf" del ".\util\nas.conf"
 goto ini
 
 :ini

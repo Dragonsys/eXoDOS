@@ -10,20 +10,24 @@ cd ..
 cd ..
 cd ..
 
-if [%lang%]==[] set lang=false
-if [%lang_cnt%]==[] set lang_cnt=0
+IF NOT "%lang%"=="" goto :skip_selection
+IF "%lang%"=="" set lang=false
+if "%lang_cnt%"=="" set lang_cnt=0
 if %lang_cnt% == 1 goto :skip_selection
 set lang_cnt=0
 
-if exist ".\eXoDOS\!dos\!Chinese\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
-if exist ".\eXoDOS\%GameName%.zip" set /A lang_cnt=%lang_cnt%+1
-if exist ".\eXoDOS\!dos\!French\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
-if exist ".\eXoDOS\!dos\!German\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
-if exist ".\eXoDOS\!dos\!Italian\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
-if exist ".\eXoDOS\!dos\!Korean\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
-if exist ".\eXoDOS\!dos\!Polish\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
-if exist ".\eXoDOS\!dos\!Russian\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
-if exist ".\eXoDOS\!dos\!Spanish\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\!dos\!Chinese\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!chinese
+for /F "delims=" %%a in ('findstr /C:":%GameName%" .\util\aria\index.txt') do (
+  set /A lang_cnt=%lang_cnt%+1
+  set lang=!english
+)
+if exist ".\eXoDOS\!dos\!French\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!french
+if exist ".\eXoDOS\!dos\!German\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!german
+if exist ".\eXoDOS\!dos\!Italian\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!italian
+if exist ".\eXoDOS\!dos\!Korean\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!korean
+if exist ".\eXoDOS\!dos\!Polish\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!polish
+if exist ".\eXoDOS\!dos\!Russian\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!russian
+if exist ".\eXoDOS\!dos\!Spanish\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!spanish
 
 if %lang_cnt% == 0 goto :English
 if %lang_cnt% == 1 goto :skip_selection
@@ -35,7 +39,9 @@ echo.
 echo Language Selection Menu
 echo.
 if exist ".\eXoDOS\!dos\!Chinese\%GameDir%\*).bat" echo Press C to install or configure the Chinese version
-if exist ".\eXoDOS\%GameName%.zip" echo Press E to install or configure the English version
+REM for /F "delims=" %%a in ('findstr /C:":%GameName%" .\util\aria\index.txt') do ( echo Press E to install or configure the English version )
+findstr /C:"%GameName%" .\util\aria\index.txt >Nul
+if %errorlevel%==0 echo Press E to install or configure the English version
 if exist ".\eXoDOS\!dos\!French\%GameDir%\*).bat" echo Press F to install or configure the French version
 if exist ".\eXoDOS\!dos\!German\%GameDir%\*).bat" echo Press G to install or configure the German version
 if exist ".\eXoDOS\!dos\!Italian\%GameDir%\*).bat" echo Press I to install or configure the Italian version
@@ -160,6 +166,7 @@ set RESTORE=Y
 :unzip2
 .\util\setconsole.exe /reset
 rem .\util\setconsole.exe /minimize
+cls
 .\util\unzip ".\eXoDOS\%GameName%.zip" -d .\eXoDOS\
 IF %RESTORE% == Y .\util\unzip -o ".\eXoDOS\!save\%GameName%.zip" -d .\eXoDOS\
 IF NOT EXIST ".\Update\!dos\%GameName%.zip" goto config
