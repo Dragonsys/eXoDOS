@@ -1,7 +1,8 @@
 cd %FOLDER%
-@echo off 
+@echo off
 set CONF=%CD%
 set RESTORE=NO
+set nasconf=.\util\nas.conf
 for %%I in (.) do set GameDir=%%~nxI
 for %%f in (*^).bat) do set GameName2=%%f
 set GameName=%GameName2:~0,-4%
@@ -104,6 +105,17 @@ If errorlevel = 2 goto end
 If errorlevel = 1 goto download
 
 :download
+IF EXIST %nasconf% goto nas
+goto torrent
+
+:nas
+set /p naspath=<%nasconf%
+call :trim %naspath% naspath
+copy "%naspath%\eXo\eXoDOS\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
+copy "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
+goto extract
+
+:torrent
 tasklist /FI "IMAGENAME eq aria2c.exe" 2>NUL | find /I /N "aria2c.exe">NUL
 if "%ERRORLEVEL%"=="0" goto inprogress
 
@@ -122,11 +134,13 @@ del *.torrent
 cd ..
 move ".\download\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
 move ".\download\GAMEDATA\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
+rd DOWNLOAD /S /Q
+goto extract
+
+:extract
 cd ..
 .\eXo\util\unzip -o ".\Content\GameData\eXoDOS\%GameName%.zip" -d .\
-cd exo
-rd DOWNLOAD /S /Q
-cd eXoDOS
+cd exo\eXoDOS
 for %%G in ("%GameName%.zip") do set size=%%~zG
 if "%size%"=="0" del "%GameName%.zip"
 cls
@@ -137,8 +151,10 @@ echo.
 pause
 
 cd ..
+
 :next
 IF EXIST ".\eXoDOS\%GameDir%\" GOTO dele
+
 :unzip
 IF NOT EXIST "exodos\%GameName%.zip" goto exit
 
@@ -405,7 +421,28 @@ cd exodos
 cd ..
 
 :delete
-rd /q /s ".\eXoDOS\%GameDir%\"
+cmd /c rd /q /s ".\eXoDOS\%GameDir%\"
+IF EXIST %nasconf% goto rmzip
+goto end
+
+:rmzip
+cls
+echo.
+echo Would you like to delete the game zip files?
+echo.
+echo NOTE: If you choose yes, then the next time you install this game, you will have
+echo to download the files again.
+echo.
+
+.\util\choice /C:YN? /N [Y]es or [N]o
+
+If errorlevel = 2 goto end
+If errorlevel = 1 goto rmzipY
+
+:rmzipY
+cmd /c del /F /Q ".\eXoDOS\%GameName%.zip"
+cmd /c del /F /Q "..\.\Content\GameData\eXoDOS\%GameName%.zip"
+goto end
 
 :end
 cd eXoDOS
@@ -419,5 +456,9 @@ echo You are currently already downloading a game. Please complete that download
 echo before starting another one.
 echo.
 pause
+
+:trim
+SET %2=%1
+exit /B
 
 :exit

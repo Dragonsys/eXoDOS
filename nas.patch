@@ -64,19 +64,20 @@ index afc210a..fb1543f 100644
 \ No newline at end of file
 +:end
 diff --git a/install.bat b/install.bat
-index b6241a9..cd7ec74 100644
+index a27cb61..c939b63 100644
 --- a/install.bat
 +++ b/install.bat
 @@ -1,7 +1,8 @@
  cd %FOLDER%
- @echo off 
+-@echo off 
++@echo off
  set CONF=%CD%
  set RESTORE=NO
 +set nasconf=.\util\nas.conf
  for %%I in (.) do set GameDir=%%~nxI
  for %%f in (*^).bat) do set GameName2=%%f
  set GameName=%GameName2:~0,-4%
-@@ -98,6 +99,17 @@ If errorlevel = 2 goto end
+@@ -104,6 +105,17 @@ If errorlevel = 2 goto end
  If errorlevel = 1 goto download
  
  :download
@@ -94,7 +95,7 @@ index b6241a9..cd7ec74 100644
  tasklist /FI "IMAGENAME eq aria2c.exe" 2>NUL | find /I /N "aria2c.exe">NUL
  if "%ERRORLEVEL%"=="0" goto inprogress
  
-@@ -116,11 +128,13 @@ del *.torrent
+@@ -122,11 +134,13 @@ del *.torrent
  cd ..
  move ".\download\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
  move ".\download\GAMEDATA\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
@@ -111,7 +112,7 @@ index b6241a9..cd7ec74 100644
  for %%G in ("%GameName%.zip") do set size=%%~zG
  if "%size%"=="0" del "%GameName%.zip"
  cls
-@@ -131,8 +145,10 @@ echo.
+@@ -137,8 +151,10 @@ echo.
  pause
  
  cd ..
@@ -122,7 +123,7 @@ index b6241a9..cd7ec74 100644
  :unzip
  IF NOT EXIST "exodos\%GameName%.zip" goto exit
  
-@@ -398,7 +414,28 @@ cd exodos
+@@ -405,7 +421,28 @@ cd exodos
  cd ..
  
  :delete
@@ -152,7 +153,7 @@ index b6241a9..cd7ec74 100644
  
  :end
  cd eXoDOS
-@@ -413,4 +450,8 @@ echo before starting another one.
+@@ -420,4 +457,8 @@ echo before starting another one.
  echo.
  pause
  
