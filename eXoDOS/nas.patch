@@ -6,7 +6,7 @@ index afc210a..fb1543f 100644
 +:main
 +set gamecnt=0
 +@for %%A in (.\eXo\eXoDOS\^!*.zip) do set /a gamecnt+=1
-+exolite=false
++set exolite=false
 +if %gamecnt% LEQ 7000 set exolite=true
  set cnt=0
  set multi=false
