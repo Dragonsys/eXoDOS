@@ -264,21 +264,18 @@ set ver1=%versionnum:*:=%
 set ver=%ver1:*:=%
 IF EXIST %nasconf% GOTO nas
 for /F "delims=" %%a in ('findstr /C:"link:" ver.txt') do set linkaddress=%%a
-set link1=%linkaddress:*:=%
-set link=%link1:*:=%
-set flink=%link:*/=%
 GOTO download
 
 :nas
 set nas=true
 set /p linkaddress=<%nasconf%
 call :trim %linkaddress% linkaddress
-set link1=%linkaddress:*:=%
-set link=%link1:*:=%
-set flink=%link:*/=%
 GOTO download
 
 :download
+set link1=%linkaddress:*:=%
+set link=%link1:*:=%
+set flink=%link:*/=%
 for /F "delims=" %%a in ('findstr /C:"file:" ver.txt') do set filename1=%%a
 set filename=%filename1:*:=%
 rem for /f "tokens=1,2,3,4 delims=/ " %%a in ("%flink%") do set update=%%b
@@ -381,9 +378,7 @@ FOR /F %%x IN ('tasklist /NH /FI "IMAGENAME eq %EXE%"') DO IF NOT %%x == %EXE% (
 rem cls
 cd ..
 echo %Updaterline0027%
-IF %nas% EQU true ( GOTO copy ) else ( GOTO torrent )
-
-:torrent
+IF %nas% EQU true GOTO copy
 if %englishupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%link%"
 if %chineseupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%chineselink%"
 if %frenchupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%frenchlink%"
@@ -396,7 +391,6 @@ if %spanishupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%spanishlink%"
 GOTO unzip
 
 :copy
-IF NOT EXIST "%linkaddress%\%filename%" ( GOTO torrent )
 copy "%linkaddress%\%filename%" ".\%filename%"
 GOTO unzip
 
