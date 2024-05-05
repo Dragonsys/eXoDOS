@@ -21,5 +21,8 @@ My Mods/Addons for the various eXo Projects
 ## /eXo_Project_Merge
 - OpenFolderBox.exe - used to make source folders selectable with a Windows GUI
 - merge_projects.bat - copy all eXo Projects to a single install folder and run the installer which merges them into a single install
-#### TODO
+### TODO
 - TBD
+
+- ## To Create
+- ### Convert to Lite Edition
