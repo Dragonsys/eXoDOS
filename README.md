@@ -24,5 +24,5 @@ My Mods/Addons for the various eXo Projects
 ### TODO
 - TBD
 
-- ## To Create
-- ### Convert to Lite Edition
+## To Create
+- Convert to Lite Edition
