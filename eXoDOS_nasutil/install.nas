@@ -515,6 +515,7 @@ goto end
 
 :nas
 set /p naspath=<%nasconf%
+if not defined naspath goto nasmissing
 if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
 if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 IF NOT EXIST "%naspath%\eXo\eXoDOS\%GameName%.zip" goto nasmissing

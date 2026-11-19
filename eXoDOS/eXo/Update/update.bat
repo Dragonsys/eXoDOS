@@ -275,6 +275,8 @@ rem for /f "tokens=1,2,3,4 delims=/ " %%a in ("%flink%") do set update=%%b
 IF NOT EXIST %nasconf% goto nasdone
 set nas=true
 set /p naspath=<%nasconf%
+if not defined naspath set nas=false
+if not defined naspath goto nasdone
 if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
 if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 :nasdone

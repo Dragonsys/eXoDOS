@@ -1,5 +1,5 @@
 diff --git a/Setup eXoDOS.bat b/Setup eXoDOS.bat
-index 83a889e..1eaaf5a 100644
+index 83a889e..0092670 100644
 --- a/Setup eXoDOS.bat	
 +++ b/Setup eXoDOS.bat	
 @@ -1,3 +1,19 @@
@@ -22,7 +22,7 @@ index 83a889e..1eaaf5a 100644
  set cnt=0
  set multi=false
  set content=false
-@@ -598,13 +614,50 @@ cls
+@@ -598,13 +614,51 @@ cls
  if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=false aspect=true .\emulators\dosbox\options.conf
  if exist ".\util\ANO.SEL" del ".\util\ANO.SEL"
  echo > ".\util\AYES.SEL"
@@ -57,7 +57,8 @@ index 83a889e..1eaaf5a 100644
 +
 +:nasY
 +cls
-+set /P naspath=Enter Full Network Share Path:
++set /P naspath=Enter Full Network Share Path: 
++if not defined naspath goto nasN
 +if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 +>".\util\nas.conf" echo %naspath%
 +if exist .\NAS\install.bat copy /Y .\NAS\install.bat .\util\install.bat >nul
@@ -75,7 +76,7 @@ index 83a889e..1eaaf5a 100644
  
  :ini
 diff --git a/install.bat b/install.bat
-index 9b6fe29..5bcf074 100644
+index 9b6fe29..b8bd8c7 100644
 --- a/install.bat
 +++ b/install.bat
 @@ -3,6 +3,7 @@ cd %FOLDER%
@@ -109,7 +110,7 @@ index 9b6fe29..5bcf074 100644
  cd eXoDOS
  for %%G in ("%GameName%.zip") do set size=%%~zG
  if "%size%"=="0" del "%GameName%.zip"
-@@ -487,13 +491,71 @@ cd eXoDOS
+@@ -487,13 +491,72 @@ cd eXoDOS
  cd ..
  
  :delete
@@ -138,6 +139,7 @@ index 9b6fe29..5bcf074 100644
 +
 +:nas
 +set /p naspath=<%nasconf%
++if not defined naspath goto nasmissing
 +if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
 +if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 +IF NOT EXIST "%naspath%\eXo\eXoDOS\%GameName%.zip" goto nasmissing
@@ -183,7 +185,7 @@ index 9b6fe29..5bcf074 100644
  cls
  echo.
 diff --git a/update.bat b/update.bat
-index e7b4526..4aa4dae 100644
+index e7b4526..69d2577 100644
 --- a/update.bat
 +++ b/update.bat
 @@ -1,4 +1,6 @@
@@ -193,13 +195,15 @@ index e7b4526..4aa4dae 100644
  if exist ..\..\Content\MediaPack.ver (
  SETLOCAL ENABLEDELAYEDEXPANSION
  powershell -command "& { (New-Object Net.WebClient).DownloadFile('http://www.retro-exo.com/MediaPack.exo', '.\MediaPack.txt') }"
-@@ -270,12 +272,26 @@ for /F "delims=" %%a in ('findstr /C:"file:" ver.txt') do set filename1=%%a
+@@ -270,12 +272,28 @@ for /F "delims=" %%a in ('findstr /C:"file:" ver.txt') do set filename1=%%a
  set filename=%filename1:*:=%
  rem for /f "tokens=1,2,3,4 delims=/ " %%a in ("%flink%") do set update=%%b
  
 +IF NOT EXIST %nasconf% goto nasdone
 +set nas=true
 +set /p naspath=<%nasconf%
++if not defined naspath set nas=false
++if not defined naspath goto nasdone
 +if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
 +if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 +:nasdone
@@ -220,7 +224,7 @@ index e7b4526..4aa4dae 100644
  if %englishupdate%==true goto cont
  if %chineseupdate%==true goto cont
  if %frenchupdate%==true goto cont
-@@ -368,24 +384,33 @@ FOR /F %%x IN ('tasklist /NH /FI "IMAGENAME eq %EXE%"') DO IF NOT %%x == %EXE% (
+@@ -368,24 +386,33 @@ FOR /F %%x IN ('tasklist /NH /FI "IMAGENAME eq %EXE%"') DO IF NOT %%x == %EXE% (
  cls
  cd ..
  echo %Updaterline0027%
@@ -264,7 +268,7 @@ index e7b4526..4aa4dae 100644
  if %spanishupdate%==true .\eXo\util\unzip -o "%spanishupdatefile%"
  
  if %englishupdate%==true del "%filename%"
-@@ -528,6 +553,23 @@ rem echo Please check your internet connection.
+@@ -528,6 +555,23 @@ rem echo Please check your internet connection.
  rem echo.
  rem pause
  

@@ -644,7 +644,8 @@ goto nasN
 
 :nasY
 cls
-set /P naspath=Enter Full Network Share Path:
+set /P naspath=Enter Full Network Share Path: 
+if not defined naspath goto nasN
 if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 >".\util\nas.conf" echo %naspath%
 if exist .\NAS\install.bat copy /Y .\NAS\install.bat .\util\install.bat >nul
