@@ -1,10 +1,10 @@
 @echo off
 rem Run from eXo\util\eXoDOS_nasutil after Setup has finished.
-rem Each project: name, games folder, most zips a Lite copy can have, settings file, installer, NAS installer
+rem Each project: name, games folder, most zips a Lite copy can have, settings file, installer, NAS installer, launchers
 set configured=0
 if exist "..\..\..\Setup eXoDOS.bat" call :configure eXoDOS eXoDOS 7000 nas.conf install.bat install.nas
-if exist "..\..\..\Setup eXoDREAMM.bat" call :configure eXoDREAMM eXoDREAMM 30 nas_eXoDREAMM.conf install_drm.bat install_drm.nas
-if exist "..\..\..\Setup eXoScummVM.bat" call :configure eXoScummVM eXoScummVM 100 nas_eXoScummVM.conf install_svm.bat install_svm.nas
+if exist "..\..\..\Setup eXoDREAMM.bat" call :configure eXoDREAMM eXoDREAMM 30 nas_eXoDREAMM.conf install_drm.bat install_drm.nas "launch_drm.bat launch_drm_verify.bat"
+if exist "..\..\..\Setup eXoScummVM.bat" call :configure eXoScummVM eXoScummVM 100 nas_eXoScummVM.conf install_svm.bat install_svm.nas "launch_svm.bat"
 if %configured%==0 (
 	cls
 	echo.
@@ -16,6 +16,7 @@ goto end
 :configure
 set gamecnt=0
 for %%A in ("..\..\%~2\*.zip") do set /a gamecnt+=1
+for /D %%Y in ("..\..\%~2\????") do for %%A in ("%%Y\*.zip") do set /a gamecnt+=1
 if %gamecnt% GTR %~3 (
 	echo %~1 is not a Lite copy, so it was left unchanged.
 	if exist "..\%~4" del "..\%~4"
@@ -46,6 +47,10 @@ if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 >"..\%~4" echo %naspath%
 copy /Y "..\%~5" "..\%~n5.bak"
 copy /Y "%~6" "..\%~5"
+for %%F in (%~7) do (
+	copy /Y "..\%%F" "..\%%~nF.bak"
+	copy /Y "%%~nF.nas" "..\%%F"
+)
 if /i "%~1"=="eXoDOS" (
 	copy /Y ..\..\Update\update.bat ..\..\Update\update.bak
 	copy /Y update.nas ..\..\Update\update.bat

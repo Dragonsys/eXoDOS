@@ -2,12 +2,12 @@
 set gamecnt=0
 @for %%A in (.\eXo\eXoScummVM\*.zip) do set /a gamecnt+=1
 set exolite=false
-if %gamecnt% LSS 101 set exolite=true
-rem Setup re-extracts the stock install_svm.bat, so keep the NAS version
+if %gamecnt% LEQ 100 set exolite=true
+rem Setup re-extracts the stock scripts, so keep the NAS versions
 findstr /C:"nasconf" .\eXo\util\install_svm.bat >nul 2>nul
 if not errorlevel 1 (
 	if not exist .\eXo\NAS\ md .\eXo\NAS
-	copy /Y .\eXo\util\install_svm.bat .\eXo\NAS\install_svm.bat >nul
+	for %%F in (install_svm.bat launch_svm.bat) do copy /Y .\eXo\util\%%F .\eXo\NAS\%%F >nul
 )
 set cnt=0
 set multi=false
@@ -635,7 +635,7 @@ set /P naspath=Enter the full path of the eXoScummVM folder on the network share
 if not defined naspath goto nasN
 if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 >".\util\nas_eXoScummVM.conf" echo %naspath%
-if exist .\NAS\install_svm.bat copy /Y .\NAS\install_svm.bat .\util\install_svm.bat >nul
+for %%F in (install_svm.bat launch_svm.bat) do if exist .\NAS\%%F copy /Y .\NAS\%%F .\util\%%F >nul
 if not exist .\NAS\install_svm.bat echo WARNING: The NAS version of install_svm.bat was not found.
 if not exist "%naspath%\eXo\eXoScummVM\" echo WARNING: No eXoScummVM games were found at %naspath%
 if not exist "%naspath%\eXo\eXoScummVM\" pause

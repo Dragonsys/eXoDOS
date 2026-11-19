@@ -2,12 +2,12 @@
 set gamecnt=0
 @for %%A in (.\eXo\eXoDREAMM\*.zip) do set /a gamecnt+=1
 set exolite=false
-if %gamecnt% LSS 31 set exolite=true
-rem Setup re-extracts the stock install_drm.bat, so keep the NAS version
+if %gamecnt% LEQ 30 set exolite=true
+rem Setup re-extracts the stock scripts, so keep the NAS versions
 findstr /C:"nasconf" .\eXo\util\install_drm.bat >nul 2>nul
 if not errorlevel 1 (
 	if not exist .\eXo\NAS\ md .\eXo\NAS
-	copy /Y .\eXo\util\install_drm.bat .\eXo\NAS\install_drm.bat >nul
+	for %%F in (install_drm.bat launch_drm.bat launch_drm_verify.bat) do copy /Y .\eXo\util\%%F .\eXo\NAS\%%F >nul
 )
 set cnt=0
 set multi=false
@@ -664,7 +664,7 @@ set /P naspath=Enter the full path of the eXoDREAMM folder on the network share:
 if not defined naspath goto nasN
 if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 >".\util\nas_eXoDREAMM.conf" echo %naspath%
-if exist .\NAS\install_drm.bat copy /Y .\NAS\install_drm.bat .\util\install_drm.bat >nul
+for %%F in (install_drm.bat launch_drm.bat launch_drm_verify.bat) do if exist .\NAS\%%F copy /Y .\NAS\%%F .\util\%%F >nul
 if not exist .\NAS\install_drm.bat echo WARNING: The NAS version of install_drm.bat was not found.
 if not exist "%naspath%\eXo\eXoDREAMM\" echo WARNING: No eXoDREAMM games were found at %naspath%
 if not exist "%naspath%\eXo\eXoDREAMM\" pause

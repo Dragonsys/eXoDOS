@@ -233,7 +233,7 @@ goto nasdecline
 
 :nasdecline
 echo %cclear%
-goto exit
+goto end
 
 :nas
 echo %cclear%
@@ -247,6 +247,7 @@ cls
 echo.
 echo Copying %GameName% from the network share...
 echo.
+IF NOT EXIST ".\eXoScummVM\" md ".\eXoScummVM"
 copy /Y "%naspath%\eXo\eXoScummVM\%GameName%.zip" ".\eXoScummVM\%GameName%.zip"
 if errorlevel 1 goto nasfailed
 goto next
@@ -258,7 +259,7 @@ echo.
 echo %GameName% could not be copied from the network share.
 echo.
 pause
-goto exit
+goto end
 
 :nasmissing
 cls
@@ -267,7 +268,7 @@ echo %GameName% was not found on the network share:
 echo %naspath%
 echo.
 pause
-goto exit
+goto end
 
 :rmzip
 cls

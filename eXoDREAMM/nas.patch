@@ -1,5 +1,5 @@
 diff --git a/Setup eXoDREAMM.bat b/Setup eXoDREAMM.bat
-index 8e02c7d..0ed9ca6 100644
+index 8e02c7d..fff9bf4 100644
 --- a/Setup eXoDREAMM.bat	
 +++ b/Setup eXoDREAMM.bat	
 @@ -1,3 +1,14 @@
@@ -7,12 +7,12 @@ index 8e02c7d..0ed9ca6 100644
 +set gamecnt=0
 +@for %%A in (.\eXo\eXoDREAMM\*.zip) do set /a gamecnt+=1
 +set exolite=false
-+if %gamecnt% LSS 31 set exolite=true
-+rem Setup re-extracts the stock install_drm.bat, so keep the NAS version
++if %gamecnt% LEQ 30 set exolite=true
++rem Setup re-extracts the stock scripts, so keep the NAS versions
 +findstr /C:"nasconf" .\eXo\util\install_drm.bat >nul 2>nul
 +if not errorlevel 1 (
 +	if not exist .\eXo\NAS\ md .\eXo\NAS
-+	copy /Y .\eXo\util\install_drm.bat .\eXo\NAS\install_drm.bat >nul
++	for %%F in (install_drm.bat launch_drm.bat launch_drm_verify.bat) do copy /Y .\eXo\util\%%F .\eXo\NAS\%%F >nul
 +)
  set cnt=0
  set multi=false
@@ -56,7 +56,7 @@ index 8e02c7d..0ed9ca6 100644
 +if not defined naspath goto nasN
 +if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
 +>".\util\nas_eXoDREAMM.conf" echo %naspath%
-+if exist .\NAS\install_drm.bat copy /Y .\NAS\install_drm.bat .\util\install_drm.bat >nul
++for %%F in (install_drm.bat launch_drm.bat launch_drm_verify.bat) do if exist .\NAS\%%F copy /Y .\NAS\%%F .\util\%%F >nul
 +if not exist .\NAS\install_drm.bat echo WARNING: The NAS version of install_drm.bat was not found.
 +if not exist "%naspath%\eXo\eXoDREAMM\" echo WARNING: No eXoDREAMM games were found at %naspath%
 +if not exist "%naspath%\eXo\eXoDREAMM\" pause
@@ -69,7 +69,7 @@ index 8e02c7d..0ed9ca6 100644
  
  :ini
 diff --git a/install_drm.bat b/install_drm.bat
-index caf078b..edc6f7d 100644
+index caf078b..0e78fd8 100644
 --- a/install_drm.bat
 +++ b/install_drm.bat
 @@ -1,6 +1,7 @@
@@ -88,7 +88,7 @@ index caf078b..edc6f7d 100644
  goto exit
  
  :next
-@@ -201,10 +203,84 @@ goto config2
+@@ -201,10 +203,85 @@ goto config2
  
  :erase
  rd /q /s ".\eXoDREAMM\%GameDir%\"
@@ -98,7 +98,7 @@ index caf078b..edc6f7d 100644
  cd eXoDREAMM
  if exist unzip.exe erase unzip.exe
 +goto exit
-+
+ 
 +:nasprompt
 +.\util\setconsole.exe /reset
 +cls
@@ -115,7 +115,7 @@ index caf078b..edc6f7d 100644
 +
 +:nasdecline
 +echo %cclear%
-+goto exit
++goto end
 +
 +:nas
 +echo %cclear%
@@ -129,6 +129,7 @@ index caf078b..edc6f7d 100644
 +echo.
 +echo Copying %GameName% from the network share...
 +echo.
++IF NOT EXIST ".\eXoDREAMM\" md ".\eXoDREAMM"
 +copy /Y "%naspath%\eXo\eXoDREAMM\%GameName%.zip" ".\eXoDREAMM\%GameName%.zip"
 +if errorlevel 1 goto nasfailed
 +goto next
@@ -140,7 +141,7 @@ index caf078b..edc6f7d 100644
 +echo %GameName% could not be copied from the network share.
 +echo.
 +pause
-+goto exit
++goto end
 +
 +:nasmissing
 +cls
@@ -149,8 +150,8 @@ index caf078b..edc6f7d 100644
 +echo %naspath%
 +echo.
 +pause
-+goto exit
- 
++goto end
++
 +:rmzip
 +cls
 +echo.
@@ -174,3 +175,27 @@ index caf078b..edc6f7d 100644
  
  :exit
 \ No newline at end of file
+diff --git a/launch_drm.bat b/launch_drm.bat
+index 453eaba..70b4b0c 100644
+--- a/launch_drm.bat
++++ b/launch_drm.bat
+@@ -204,6 +204,7 @@ call install.bat
+ cd ..
+ .\util\setconsole.exe /minimize
+ cls
++IF NOT EXIST ".\eXoDREAMM\%GameDir%\" goto end
+ goto launch
+ goto end
+ :no
+diff --git a/launch_drm_verify.bat b/launch_drm_verify.bat
+index 158a508..a053880 100644
+--- a/launch_drm_verify.bat
++++ b/launch_drm_verify.bat
+@@ -205,6 +205,7 @@ call install.bat
+ cd ..
+ .\util\setconsole.exe /minimize
+ cls
++IF NOT EXIST ".\eXoDREAMM\%GameDir%\" goto end
+ goto launch
+ goto end
+ :no
