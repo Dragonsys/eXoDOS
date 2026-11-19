@@ -1,17 +1,28 @@
 diff --git a/Setup eXoDOS.bat b/Setup eXoDOS.bat
-index afc210a..fb1543f 100644
+index 83a889e..1eaaf5a 100644
 --- a/Setup eXoDOS.bat	
 +++ b/Setup eXoDOS.bat	
-@@ -1,3 +1,8 @@
+@@ -1,3 +1,19 @@
 +:main
 +set gamecnt=0
-+@for %%A in (.\eXo\eXoDOS\^!*.zip) do set /a gamecnt+=1
++@for %%A in (.\eXo\eXoDOS\*.zip) do set /a gamecnt+=1
 +set exolite=false
 +if %gamecnt% LEQ 7000 set exolite=true
++rem Setup re-extracts the stock install.bat and update.bat, so keep the NAS versions
++findstr /C:"nasconf" .\eXo\util\install.bat >nul 2>nul
++if not errorlevel 1 (
++	if not exist .\eXo\NAS\ md .\eXo\NAS
++	copy /Y .\eXo\util\install.bat .\eXo\NAS\install.bat >nul
++)
++findstr /C:"nasconf" .\eXo\Update\update.bat >nul 2>nul
++if not errorlevel 1 (
++	if not exist .\eXo\NAS\ md .\eXo\NAS
++	copy /Y .\eXo\Update\update.bat .\eXo\NAS\update.bat >nul
++)
  set cnt=0
  set multi=false
  set content=false
-@@ -562,13 +567,43 @@ cls
+@@ -598,13 +614,50 @@ cls
  if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=false aspect=true .\emulators\dosbox\options.conf
  if exist ".\util\ANO.SEL" del ".\util\ANO.SEL"
  echo > ".\util\AYES.SEL"
@@ -32,7 +43,7 @@ index afc210a..fb1543f 100644
 +	echo Would you like to enable downloading from a network share instead of torrent?
 +	echo.
 +	echo Choosing Yes will attempt to set a network share location for the full eXoDOS
-+	echo location, to use for downloading games form instead of using the torrent, when
++	echo location, to use for downloading games from instead of using the torrent, when
 +	echo eXoDOS Lite is installed and the game has not yet been downloaded.
 +	echo.
 +	echo Choosing No will leave the default of using torrent downloads.
@@ -46,8 +57,15 @@ index afc210a..fb1543f 100644
 +
 +:nasY
 +cls
-+set /P naspath=Enter Full Network Share Path: 
-+echo %naspath% > ".\util\nas.conf"
++set /P naspath=Enter Full Network Share Path:
++if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
++>".\util\nas.conf" echo %naspath%
++if exist .\NAS\install.bat copy /Y .\NAS\install.bat .\util\install.bat >nul
++if exist .\NAS\update.bat copy /Y .\NAS\update.bat .\Update\update.bat >nul
++if not exist .\NAS\install.bat echo WARNING: The NAS version of install.bat was not found.
++if not exist .\NAS\update.bat echo WARNING: The NAS version of update.bat was not found.
++if not exist "%naspath%\eXo\eXoDOS\" echo WARNING: No eXoDOS games were found at %naspath%
++if not exist "%naspath%\eXo\eXoDOS\" pause
 +goto ini
 +
 +:nasN
@@ -56,80 +74,90 @@ index afc210a..fb1543f 100644
  goto ini
  
  :ini
-@@ -606,4 +641,4 @@ echo URL=%CD%\LaunchBox.exe >> "%userprofile%\Desktop\exoDOS.url"
- echo IconFile=%CD%\eXo\util\exodos.ico >> "%userprofile%\Desktop\eXoDOS.url"
- echo IconIndex=0 >> "%userprofile%\Desktop\eXoDOS.url"
- 
--:end
-\ No newline at end of file
-+:end
 diff --git a/install.bat b/install.bat
-index a27cb61..c939b63 100644
+index 9b6fe29..5bcf074 100644
 --- a/install.bat
 +++ b/install.bat
-@@ -1,7 +1,8 @@
- cd %FOLDER%
--@echo off 
-+@echo off
+@@ -3,6 +3,7 @@ cd %FOLDER%
+ set mediafiles=false
  set CONF=%CD%
  set RESTORE=NO
 +set nasconf=.\util\nas.conf
  for %%I in (.) do set GameDir=%%~nxI
  for %%f in (*^).bat) do set GameName2=%%f
  set GameName=%GameName2:~0,-4%
-@@ -104,6 +105,17 @@ If errorlevel = 2 goto end
- If errorlevel = 1 goto download
+@@ -70,6 +71,7 @@ cls
+ for %%G in (".\eXoDOS\%GameName%.zip") do set size=%%~zG
+ if "%size%"=="0" del ".\eXoDOS\%GameName%.zip"
+ IF EXIST "eXoDOS\%GameName%.zip" goto next
++IF EXIST %nasconf% goto nasprompt
  
- :download
-+IF EXIST %nasconf% goto nas
-+goto torrent
-+
-+:nas
-+set /p naspath=<%nasconf%
-+call :trim %naspath% naspath
-+copy "%naspath%\eXo\eXoDOS\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
-+copy "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
-+goto extract
-+
-+:torrent
- tasklist /FI "IMAGENAME eq aria2c.exe" 2>NUL | find /I /N "aria2c.exe">NUL
- if "%ERRORLEVEL%"=="0" goto inprogress
- 
-@@ -122,11 +134,13 @@ del *.torrent
+ cls
+ set gigabyte=false
+@@ -199,10 +201,12 @@ del *.torrent
  cd ..
- move ".\download\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
- move ".\download\GAMEDATA\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
-+rd DOWNLOAD /S /Q
-+goto extract
+ move ".\DOWNLOAD\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
+ move ".\DOWNLOAD\GAMEDATA\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
 +
 +:extract
  cd ..
- .\eXo\util\unzip -o ".\Content\GameData\eXoDOS\%GameName%.zip" -d .\
--cd exo
+-.\eXo\util\unzip -o ".\Content\GameData\eXoDOS\%GameName%.zip" -d .\
++IF EXIST ".\Content\GameData\eXoDOS\%GameName%.zip" .\eXo\util\unzip -o ".\Content\GameData\eXoDOS\%GameName%.zip" -d .\
+ cd eXo
 -rd DOWNLOAD /S /Q
--cd eXoDOS
-+cd exo\eXoDOS
++IF EXIST DOWNLOAD rd DOWNLOAD /S /Q
+ cd eXoDOS
  for %%G in ("%GameName%.zip") do set size=%%~zG
  if "%size%"=="0" del "%GameName%.zip"
- cls
-@@ -137,8 +151,10 @@ echo.
- pause
- 
- cd ..
-+
- :next
- IF EXIST ".\eXoDOS\%GameDir%\" GOTO dele
-+
- :unzip
- IF NOT EXIST "exodos\%GameName%.zip" goto exit
- 
-@@ -405,7 +421,28 @@ cd exodos
+@@ -487,13 +491,71 @@ cd eXoDOS
  cd ..
  
  :delete
 -rd /q /s ".\eXoDOS\%GameDir%\"
 +cmd /c rd /q /s ".\eXoDOS\%GameDir%\"
 +IF EXIST %nasconf% goto rmzip
+ 
+ :end
+ cd eXoDOS
+ if exist unzip.exe erase unzip.exe
+ goto exit
+ 
++:nasprompt
++.\util\setconsole.exe /reset
++cls
++echo.
++echo It appears you have not copied this game yet.
++echo.
++echo Would you like to copy %GameName% from the network share?
++echo.
++.\util\choice /C:YN /N [Y]es or [N]o
++
++If errorlevel = 2 goto end
++If errorlevel = 1 goto nas
++goto end
++
++:nas
++set /p naspath=<%nasconf%
++if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
++if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
++IF NOT EXIST "%naspath%\eXo\eXoDOS\%GameName%.zip" goto nasmissing
++cls
++echo.
++echo Copying %GameName% from the network share...
++echo.
++copy /Y "%naspath%\eXo\eXoDOS\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
++IF NOT EXIST "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" goto extract
++IF NOT EXIST "..\Content\GameData\eXoDOS\" md "..\Content\GameData\eXoDOS"
++copy /Y "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" "..\Content\GameData\eXoDOS\%GameName%.zip"
++goto extract
++
++:nasmissing
++cls
++echo.
++echo %GameName% was not found on the network share:
++echo %naspath%
++echo.
++pause
 +goto end
 +
 +:rmzip
@@ -138,29 +166,125 @@ index a27cb61..c939b63 100644
 +echo Would you like to delete the game zip files?
 +echo.
 +echo NOTE: If you choose yes, then the next time you install this game, you will have
-+echo to download the files again.
++echo to copy the files from the network share again.
 +echo.
-+
-+.\util\choice /C:YN? /N [Y]es or [N]o
++.\util\choice /C:YN /N [Y]es or [N]o
 +
 +If errorlevel = 2 goto end
 +If errorlevel = 1 goto rmzipY
++goto end
 +
 +:rmzipY
 +cmd /c del /F /Q ".\eXoDOS\%GameName%.zip"
-+cmd /c del /F /Q "..\.\Content\GameData\eXoDOS\%GameName%.zip"
++cmd /c del /F /Q "..\Content\GameData\eXoDOS\%GameName%.zip"
 +goto end
- 
- :end
- cd eXoDOS
-@@ -420,4 +457,8 @@ echo before starting another one.
++
+ :inprogress
+ cls
  echo.
- pause
+diff --git a/update.bat b/update.bat
+index e7b4526..4aa4dae 100644
+--- a/update.bat
++++ b/update.bat
+@@ -1,4 +1,6 @@
+ @echo off
++set nasconf=..\util\nas.conf
++set nas=false
+ if exist ..\..\Content\MediaPack.ver (
+ SETLOCAL ENABLEDELAYEDEXPANSION
+ powershell -command "& { (New-Object Net.WebClient).DownloadFile('http://www.retro-exo.com/MediaPack.exo', '.\MediaPack.txt') }"
+@@ -270,12 +272,26 @@ for /F "delims=" %%a in ('findstr /C:"file:" ver.txt') do set filename1=%%a
+ set filename=%filename1:*:=%
+ rem for /f "tokens=1,2,3,4 delims=/ " %%a in ("%flink%") do set update=%%b
  
--:exit
-\ No newline at end of file
-+:trim
-+SET %2=%1
++IF NOT EXIST %nasconf% goto nasdone
++set nas=true
++set /p naspath=<%nasconf%
++if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
++if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
++:nasdone
++
+ echo %ver%> ver2.txt
+ fc ver2.txt .\ver\ver.txt
+ 
+ if errorlevel = 0 set englishupdate=false
+ if errorlevel = 1 set englishupdate=true
+ 
++rem Never offer a version older than the one installed
++set remotever=0
++set localver=0
++for /f "tokens=2,3 delims=. " %%a in ("%ver%") do set /a remotever=%%a*1000+1%%b
++for /f "tokens=2,3 delims=. " %%a in ("%currentver%") do set /a localver=%%a*1000+1%%b
++if %remotever% LSS %localver% set englishupdate=false
++
+ if %englishupdate%==true goto cont
+ if %chineseupdate%==true goto cont
+ if %frenchupdate%==true goto cont
+@@ -368,24 +384,33 @@ FOR /F %%x IN ('tasklist /NH /FI "IMAGENAME eq %EXE%"') DO IF NOT %%x == %EXE% (
+ cls
+ cd ..
+ echo %Updaterline0027%
+-if %englishupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%link%"
+-if %chineseupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%chineselink%"
+-if %frenchupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%frenchlink%"
+-if %germanupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%germanlink%"
+-if %italianupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%italianlink%"
+-if %koreanupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%koreanlink%"
+-if %polishupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%polishlink%"
+-if %russianupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%russianlink%"
+-if %spanishupdate%==true .\eXo\util\aria\aria2c.exe -x8 "https:%spanishlink%"
+-
++if %englishupdate%==true call :getupdate "%filename%" "%link%"
++if %chineseupdate%==true call :getupdate "%chineseupdatefile%" "%chineselink%"
++if %frenchupdate%==true call :getupdate "%frenchupdatefile%" "%frenchlink%"
++if %germanupdate%==true call :getupdate "%germanupdatefile%" "%germanlink%"
++if %italianupdate%==true call :getupdate "%italianupdatefile%" "%italianlink%"
++if %koreanupdate%==true call :getupdate "%koreanupdatefile%" "%koreanlink%"
++if %polishupdate%==true call :getupdate "%polishupdatefile%" "%polishlink%"
++if %russianupdate%==true call :getupdate "%russianupdatefile%" "%russianlink%"
++if %spanishupdate%==true call :getupdate "%spanishupdatefile%" "%spanishlink%"
++
++if %englishupdate%==true if not exist "%filename%" goto updatefailed
+ if %englishupdate%==true .\eXo\util\unzip -o "%filename%"
++if %chineseupdate%==true if not exist "%chineseupdatefile%" goto updatefailed
+ if %chineseupdate%==true .\eXo\util\unzip -o "%chineseupdatefile%"
++if %frenchupdate%==true if not exist "%frenchupdatefile%" goto updatefailed
+ if %frenchupdate%==true .\eXo\util\unzip -o "%frenchupdatefile%"
++if %germanupdate%==true if not exist "%germanupdatefile%" goto updatefailed
+ if %germanupdate%==true .\eXo\util\unzip -o "%germanupdatefile%"
++if %italianupdate%==true if not exist "%italianupdatefile%" goto updatefailed
+ if %italianupdate%==true .\eXo\util\unzip -o "%italianupdatefile%"
++if %koreanupdate%==true if not exist "%koreanupdatefile%" goto updatefailed
+ if %koreanupdate%==true .\eXo\util\unzip -o "%koreanupdatefile%"
++if %polishupdate%==true if not exist "%polishupdatefile%" goto updatefailed
+ if %polishupdate%==true .\eXo\util\unzip -o "%polishupdatefile%"
++if %russianupdate%==true if not exist "%russianupdatefile%" goto updatefailed
+ if %russianupdate%==true .\eXo\util\unzip -o "%russianupdatefile%"
++if %spanishupdate%==true if not exist "%spanishupdatefile%" goto updatefailed
+ if %spanishupdate%==true .\eXo\util\unzip -o "%spanishupdatefile%"
+ 
+ if %englishupdate%==true del "%filename%"
+@@ -528,6 +553,23 @@ rem echo Please check your internet connection.
+ rem echo.
+ rem pause
+ 
++:getupdate
++if %nas%==true if exist "%naspath%\%~1" (
++	copy /Y "%naspath%\%~1" ".\%~1"
++	exit /B
++)
++.\eXo\util\aria\aria2c.exe -x8 "https:%~2"
 +exit /B
 +
-+:exit
++:updatefailed
++cls
++echo.
++echo The update file could not be found or downloaded. Nothing was changed.
++echo.
++pause
++cd eXo
++goto exit
++
+ :exit
+ cd Update
+ del *ver*.*

@@ -10,7 +10,7 @@ set mpver1=!mpversionnum:*:=!
 set mpver=!mpver1:*:=!
 
 if !mpver! == !mpcurrentver! goto mpskip
-rem cls
+cls
 echo.
 echo Currently you have Media Pack !mpcurrentver!.
 echo !mpver! is available. To update to it, please 
@@ -21,10 +21,11 @@ echo 4. Run the Setup eXoDOS.bat file, and choose to install the Media Pack
 echo.
 echo Press a key to continue the update process.
 pause >nul
+)
+
 :mpskip
 @del MediaPack.txt
 SETLOCAL DISABLEDELAYEDEXPANSION
-)
 
 set chineseupdate=false
 set frenchupdate=false
@@ -49,7 +50,7 @@ if exist "..\eXoDOS\!dos\!Polish\" set polishupdate=true
 if exist "..\eXoDOS\!dos\!Russian\" set russianupdate=true
 if exist "..\eXoDOS\!dos\!Spanish\" set spanishupdate=true
 
-rem cls
+cls
 echo.
 echo Language Packs Detected.
 echo.
@@ -262,29 +263,34 @@ for /F "delims=" %%a in ('findstr /C:"ver:" ver.txt') do set versionnum=%%a
 for /F "delims=" %%a in ('findstr /C:"Version" .\ver\ver.txt') do set currentver=%%a
 set ver1=%versionnum:*:=%
 set ver=%ver1:*:=%
-IF EXIST %nasconf% GOTO nas
 for /F "delims=" %%a in ('findstr /C:"link:" ver.txt') do set linkaddress=%%a
-GOTO download
-
-:nas
-set nas=true
-set /p linkaddress=<%nasconf%
-call :trim %linkaddress% linkaddress
-GOTO download
-
-:download
 set link1=%linkaddress:*:=%
 set link=%link1:*:=%
 set flink=%link:*/=%
+
 for /F "delims=" %%a in ('findstr /C:"file:" ver.txt') do set filename1=%%a
 set filename=%filename1:*:=%
 rem for /f "tokens=1,2,3,4 delims=/ " %%a in ("%flink%") do set update=%%b
+
+IF NOT EXIST %nasconf% goto nasdone
+set nas=true
+set /p naspath=<%nasconf%
+if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
+if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
+:nasdone
 
 echo %ver%> ver2.txt
 fc ver2.txt .\ver\ver.txt
 
 if errorlevel = 0 set englishupdate=false
 if errorlevel = 1 set englishupdate=true
+
+rem Never offer a version older than the one installed
+set remotever=0
+set localver=0
+for /f "tokens=2,3 delims=. " %%a in ("%ver%") do set /a remotever=%%a*1000+1%%b
+for /f "tokens=2,3 delims=. " %%a in ("%currentver%") do set /a localver=%%a*1000+1%%b
+if %remotever% LSS %localver% set englishupdate=false
 
 if %englishupdate%==true goto cont
 if %chineseupdate%==true goto cont
@@ -298,7 +304,7 @@ if %spanishupdate%==true goto cont
 goto alreadyupdated
 
 :cont
-rem cls
+cls
 if %englishupdate%==true echo.
 if %englishupdate%==true echo.
 if %englishupdate%==true echo %Updaterline0001% %currentver%.
@@ -356,12 +362,12 @@ If errorlevel = 1 goto start
 SETLOCAL EnableExtensions
 SET EXE=LaunchBox.exe
 FOR /F %%x IN ('tasklist /NH /FI "IMAGENAME eq %EXE%"') DO IF NOT %%x == %EXE% (
-  rem cls
+  CLS
   ECHO.
   ECHO.
   GOTO updatenow
 ) ELSE (
-  rem cls
+  CLS
   echo.
   ECHO %EXE% %Updaterline0023%
   echo.
@@ -375,35 +381,37 @@ FOR /F %%x IN ('tasklist /NH /FI "IMAGENAME eq %EXE%"') DO IF NOT %%x == %EXE% (
 )
 
 :updatenow
-rem cls
+cls
 cd ..
 echo %Updaterline0027%
-IF %nas% EQU true GOTO copy
-if %englishupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%link%"
-if %chineseupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%chineselink%"
-if %frenchupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%frenchlink%"
-if %germanupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%germanlink%"
-if %italianupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%italianlink%"
-if %koreanupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%koreanlink%"
-if %polishupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%polishlink%"
-if %russianupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%russianlink%"
-if %spanishupdate%==true .\exo\util\aria\aria2c.exe -x8 "https:%spanishlink%"
-GOTO unzip
+if %englishupdate%==true call :getupdate "%filename%" "%link%"
+if %chineseupdate%==true call :getupdate "%chineseupdatefile%" "%chineselink%"
+if %frenchupdate%==true call :getupdate "%frenchupdatefile%" "%frenchlink%"
+if %germanupdate%==true call :getupdate "%germanupdatefile%" "%germanlink%"
+if %italianupdate%==true call :getupdate "%italianupdatefile%" "%italianlink%"
+if %koreanupdate%==true call :getupdate "%koreanupdatefile%" "%koreanlink%"
+if %polishupdate%==true call :getupdate "%polishupdatefile%" "%polishlink%"
+if %russianupdate%==true call :getupdate "%russianupdatefile%" "%russianlink%"
+if %spanishupdate%==true call :getupdate "%spanishupdatefile%" "%spanishlink%"
 
-:copy
-copy "%linkaddress%\%filename%" ".\%filename%"
-GOTO unzip
-
-:unzip
-if %englishupdate%==true .\exo\util\unzip -o "%filename%"
-if %chineseupdate%==true .\exo\util\unzip -o "%chineseupdatefile%"
-if %frenchupdate%==true .\exo\util\unzip -o "%frenchupdatefile%"
-if %germanupdate%==true .\exo\util\unzip -o "%germanupdatefile%"
-if %italianupdate%==true .\exo\util\unzip -o "%italianupdatefile%"
-if %koreanupdate%==true .\exo\util\unzip -o "%koreanupdatefile%"
-if %polishupdate%==true .\exo\util\unzip -o "%polishupdatefile%"
-if %russianupdate%==true .\exo\util\unzip -o "%russianupdatefile%"
-if %spanishupdate%==true .\exo\util\unzip -o "%spanishupdatefile%"
+if %englishupdate%==true if not exist "%filename%" goto updatefailed
+if %englishupdate%==true .\eXo\util\unzip -o "%filename%"
+if %chineseupdate%==true if not exist "%chineseupdatefile%" goto updatefailed
+if %chineseupdate%==true .\eXo\util\unzip -o "%chineseupdatefile%"
+if %frenchupdate%==true if not exist "%frenchupdatefile%" goto updatefailed
+if %frenchupdate%==true .\eXo\util\unzip -o "%frenchupdatefile%"
+if %germanupdate%==true if not exist "%germanupdatefile%" goto updatefailed
+if %germanupdate%==true .\eXo\util\unzip -o "%germanupdatefile%"
+if %italianupdate%==true if not exist "%italianupdatefile%" goto updatefailed
+if %italianupdate%==true .\eXo\util\unzip -o "%italianupdatefile%"
+if %koreanupdate%==true if not exist "%koreanupdatefile%" goto updatefailed
+if %koreanupdate%==true .\eXo\util\unzip -o "%koreanupdatefile%"
+if %polishupdate%==true if not exist "%polishupdatefile%" goto updatefailed
+if %polishupdate%==true .\eXo\util\unzip -o "%polishupdatefile%"
+if %russianupdate%==true if not exist "%russianupdatefile%" goto updatefailed
+if %russianupdate%==true .\eXo\util\unzip -o "%russianupdatefile%"
+if %spanishupdate%==true if not exist "%spanishupdatefile%" goto updatefailed
+if %spanishupdate%==true .\eXo\util\unzip -o "%spanishupdatefile%"
 
 if %englishupdate%==true del "%filename%"
 if %chineseupdate%==true del "%chineseupdatefile%"
@@ -415,8 +423,8 @@ if %polishupdate%==true del "%polishupdatefile%"
 if %russianupdate%==true del "%russianupdatefile%"
 if %spanishupdate%==true del "%spanishupdatefile%"
 
-cd exo
-cd update
+cd eXo
+cd Update
 if %englishupdate%==true copy ver2.txt .\ver\ver.txt
 if %chineseupdate%==true copy chinesever2.txt ..\emulators\dosbox\chinese.lang
 if %frenchupdate%==true copy frenchver2.txt ..\emulators\dosbox\french.lang
@@ -431,7 +439,7 @@ cd ..
 cd ..
 
 cd eXo
-rem cls
+cls
 echo.
 echo %Updaterline0028%
 echo %Updaterline0029%
@@ -441,7 +449,7 @@ copy .\Update\update_installed.bat .\
 call update_installed.bat
 del update_installed.bat
 
-rem cls
+cls
 echo.
 echo %Updaterline0030%
 echo.
@@ -450,63 +458,63 @@ echo.
 pause
 
 :change
-rem cls
+cls
 if %englishupdate%==true echo.
 if %englishupdate%==true echo %Updaterline0032%
 if %englishupdate%==true echo.
 if %englishupdate%==true type .\Update\changelog.txt | more
 if %englishupdate%==true echo.
 if %englishupdate%==true pause
-rem cls
+cls
 if %chineseupdate%==true echo.
 if %chineseupdate%==true echo %Updaterline0033%
 if %chineseupdate%==true echo.
 if %chineseupdate%==true type .\Update\chinese_changelog.txt | more
 if %chineseupdate%==true echo.
 if %chineseupdate%==true pause
-rem cls
+cls
 if %frenchupdate%==true echo.
 if %frenchupdate%==true echo %Updaterline0034%
 if %frenchupdate%==true echo.
 if %frenchupdate%==true type .\Update\french_changelog.txt | more
 if %frenchupdate%==true echo.
 if %frenchupdate%==true pause
-rem cls
+cls
 if %germanupdate%==true echo.
 if %germanupdate%==true echo %Updaterline0035%
 if %germanupdate%==true echo.
 if %germanupdate%==true type .\Update\german_changelog.txt | more
 if %germanupdate%==true echo.
 if %germanupdate%==true pause
-rem cls
+cls
 if %italianupdate%==true echo.
 if %italianupdate%==true echo %Updaterline0036%
 if %italianupdate%==true echo.
 if %italianupdate%==true type .\Update\italian_changelog.txt | more
 if %italianupdate%==true echo.
 if %italianupdate%==true pause
-rem cls
+cls
 if %koreanupdate%==true echo.
 if %koreanupdate%==true echo %Updaterline0037%
 if %koreanupdate%==true echo.
 if %koreanupdate%==true type .\Update\korean_changelog.txt | more
 if %koreanupdate%==true echo.
 if %koreanupdate%==true pause
-rem cls
+cls
 if %polishupdate%==true echo.
 if %polishupdate%==true echo %Updaterline0038%
 if %polishupdate%==true echo.
 if %polishupdate%==true type .\Update\polish_changelog.txt | more
 if %polishupdate%==true echo.
 if %polishupdate%==true pause
-rem cls
+cls
 if %russianupdate%==true echo.
 if %russianupdate%==true echo %Updaterline0039%
 if %russianupdate%==true echo.
 if %russianupdate%==true type .\Update\russian_changelog.txt | more
 if %russianupdate%==true echo.
 if %russianupdate%==true pause
-rem cls
+cls
 if %spanishupdate%==true echo.
 if %spanishupdate%==true echo %Updaterline0040%
 if %spanishupdate%==true echo.
@@ -514,12 +522,12 @@ if %spanishupdate%==true type .\Update\spanish_changelog.txt | more
 if %spanishupdate%==true echo.
 if %spanishupdate%==true pause
 
-cd update
+cd Update
 if exist *ver*.* del *ver*.*
 goto exit
 
 :alreadyupdated
-rem cls
+cls
 echo.
 echo %Updaterline0041%
 echo.
@@ -531,7 +539,7 @@ rem :noupdate
 rem cls
 rem echo.
 rem echo No update file found. Please download the update file and place it in the same folder
-rem echo you launch eXoDOS from (where launchbox.exe resides)
+rem echo you launch eXoDOS from (where LaunchBox.exe resides)
 rem echo.
 rem pause
 rem goto exit
@@ -545,11 +553,24 @@ rem echo Please check your internet connection.
 rem echo.
 rem pause
 
-:trim
-SET %2=%1
+:getupdate
+if %nas%==true if exist "%naspath%\%~1" (
+	copy /Y "%naspath%\%~1" ".\%~1"
+	exit /B
+)
+.\eXo\util\aria\aria2c.exe -x8 "https:%~2"
 exit /B
 
+:updatefailed
+cls
+echo.
+echo The update file could not be found or downloaded. Nothing was changed.
+echo.
+pause
+cd eXo
+goto exit
+
 :exit
-cd update
+cd Update
 del *ver*.*
 call update_xml.bat

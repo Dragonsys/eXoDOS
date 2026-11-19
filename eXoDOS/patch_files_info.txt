@@ -1,129 +1,47 @@
-Setup eXoDOS.bat:
-Line 1:
-	before
-		set cnt=0
-	add
-		:main
-		set gamecnt=0
-		@for %%A in (.\eXo\eXoDOS\^!*.zip) do set /a gamecnt+=1
-		exolite=false
-		if %gamecnt% LEQ 7000 set exolite=true
-Line 565 (new 570):
-	replace
-		goto ini
-	with
-		goto nas
-Line 572 (new 577):
-	after
-		echo > ".\util\ANO.SEL"
-	before
-		goto ini
-	add
-		goto nas
-		
-		:nas
-		if %exolite%==true (
-			cls
-			echo.
-			echo Would you like to enable downloading from a network share instead of torrent?
-			echo.
-			echo Choosing Yes will attempt to set a network share location for the full eXoDOS
-			echo location, to use for downloading games form instead of using the torrent, when
-			echo eXoDOS Lite is installed and the game has not yet been downloaded.
-			echo.
-			echo Choosing No will leave the default of using torrent downloads.
-			echo.
-			.\util\choice /C:YN /N [Y]es or [N]o
-		
-			If errorlevel = 2 goto nasN
-			If errorlevel = 1 goto nasY
-		)
-		goto nasN
-		
-		:nasY
-		cls
-		set /P naspath=Enter Full Network Share Path: 
-		echo %naspath% > ".\util\nas.conf"
-		goto ini
-		
-		:nasN
-		cls
-		if exist ".\util\nas.conf" del ".\util\nas.conf"
-		
-		
+NAS changes for eXoDOS v6.04
+nas.patch holds the full diff against the stock 6.04 files. To apply it, put stock copies of
+"Setup eXoDOS.bat", install.bat and update.bat in one folder and run:
+	git apply --ignore-whitespace nas.patch
+
+Where the stock files come from:
+	Setup eXoDOS.bat	root of the eXoDOS pack
+	install.bat		eXo\util\util.zip
+	update.bat		Update\ inside EXTDOS.zip, which is inside eXo\util\util.zip
+
+Setup eXoDOS.bat
+	Top of file (before: set cnt=0)
+		Count all game zips. 7000 or fewer means eXoDOS Lite.
+		Save the NAS install.bat and update.bat to eXo\NAS, because Setup re-extracts the stock files.
+	:aspectY and :aspectN
+		goto ini becomes goto nas
+	New sections before :ini
+		:nas	offer the network share on Lite only
+		:nasY	write eXo\util\nas.conf and restore the NAS scripts from eXo\NAS
+		:nasN	remove nas.conf and keep the stock scripts
 
 eXo/util/install.bat
-Line 5:
-	after
-		set RESTORE=NO
-	before
-		for %%I in (.) do set GameDir=%%~nxI
-	add
+	After: set RESTORE=NO
 		set nasconf=.\util\nas.conf
-Line 100 (new 101):
-	after
-		:download
-	before
-		tasklist /FI "IMAGENAME eq aria2c.exe" 2>NUL | find /I /N "aria2c.exe">NUL
-	add
-		IF EXIST %nasconf% goto nas
-		goto torrent
-		
-		:nas
-		set /p naspath=<%nasconf%
-		call :trim %naspath% naspath
-		copy "%naspath%\eXo\eXoDOS\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
-		copy "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
-		goto extract
-		
-		:torrent
-Line 118 (new 130):
-	after
-		move ".\download\GAMEDATA\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
-	before
-		cd ..
-	add
-		rd DOWNLOAD /S /Q
-		goto extract
-		
-		:extract
-Line 120 (new 136):
-	replace
-		cd exo
-		rd DOWNLOAD /S /Q
-		cd eXoDOS
-	with
-		cd exo\eXoDOS
-Line 401 (new 415)
-	replace
-		rd /q /s ".\eXoDOS\%GameDir%\"
-	with
-		cmd /c rd /q /s ".\eXoDOS\%GameDir%\"
+	After: IF EXIST "eXoDOS\%GameName%.zip" goto next
+		IF EXIST %nasconf% goto nasprompt
+	After the torrent move commands
+		New :extract label, shared by the torrent and NAS paths.
+		The media unzip now runs only when the game has a media zip.
+	:delete
 		IF EXIST %nasconf% goto rmzip
-		goto end
-		
-		:rmzip
-		cls
-		echo.
-		echo Would you like to delete the game zip files?
-		echo.
-		echo NOTE: If you choose yes, then the next time you install this game, you will have
-		echo to download the files again.
-		echo.
-		
-		.\util\choice /C:YN? /N [Y]es or [N]o
-		
-		If errorlevel = 2 goto end
-		If errorlevel = 1 goto rmzipY
-		
-		:rmzipY
-		cmd /c del /F /Q ".\eXoDOS\%GameName%.zip"
-		cmd /c del /F /Q "..\.\Content\GameData\eXoDOS\%GameName%.zip"
-		goto end
-Line 415 (new 450):
-	before
-		:exit
-	add
-		:trim
-		SET %2=%1
-		exit /B
+	New sections before :inprogress
+		:nasprompt, :nas, :nasmissing, :rmzip, :rmzipY
+
+eXo/Update/update.bat
+	Top of file
+		set nasconf=..\util\nas.conf and set nas=false
+	After: set filename=
+		Read the share path from nas.conf.
+	After the version compare
+		Never offer a version older than the one installed. This applies with or without NAS.
+	:updatenow
+		Each aria2c line becomes: call :getupdate
+		Stop at :updatefailed if the update file did not arrive, before the version is recorded.
+	New sections before :exit
+		:getupdate	copy the file from the share if it is there, otherwise download it
+		:updatefailed	report the failure and leave the install unchanged

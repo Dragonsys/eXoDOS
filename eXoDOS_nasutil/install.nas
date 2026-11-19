@@ -1,5 +1,6 @@
 cd %FOLDER%
 @echo off 
+set mediafiles=false
 set CONF=%CD%
 set RESTORE=NO
 set nasconf=.\util\nas.conf
@@ -11,24 +12,20 @@ cd ..
 cd ..
 cd ..
 
-IF NOT "%lang%"=="" goto :skip_selection
-IF "%lang%"=="" set lang=false
-if "%lang_cnt%"=="" set lang_cnt=0
+if [%lang%]==[] set lang=false
+if [%lang_cnt%]==[] set lang_cnt=0
 if %lang_cnt% == 1 goto :skip_selection
 set lang_cnt=0
 
-if exist ".\eXoDOS\!dos\!Chinese\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!chinese
-for /F "delims=" %%a in ('findstr /C:":%GameName%" .\util\aria\index.txt') do (
-  set /A lang_cnt=%lang_cnt%+1
-  set lang=!english
-)
-if exist ".\eXoDOS\!dos\!French\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!french
-if exist ".\eXoDOS\!dos\!German\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!german
-if exist ".\eXoDOS\!dos\!Italian\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!italian
-if exist ".\eXoDOS\!dos\!Korean\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!korean
-if exist ".\eXoDOS\!dos\!Polish\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!polish
-if exist ".\eXoDOS\!dos\!Russian\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!russian
-if exist ".\eXoDOS\!dos\!Spanish\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1 & set lang=!spanish
+if exist ".\eXoDOS\!dos\!Chinese\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\%GameName%.zip" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\!dos\!French\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\!dos\!German\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\!dos\!Italian\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\!dos\!Korean\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\!dos\!Polish\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\!dos\!Russian\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
+if exist ".\eXoDOS\!dos\!Spanish\%GameDir%\*).bat" set /A lang_cnt=%lang_cnt%+1
 
 if %lang_cnt% == 0 goto :English
 if %lang_cnt% == 1 goto :skip_selection
@@ -40,9 +37,7 @@ echo.
 echo Language Selection Menu
 echo.
 if exist ".\eXoDOS\!dos\!Chinese\%GameDir%\*).bat" echo Press C to install or configure the Chinese version
-REM for /F "delims=" %%a in ('findstr /C:":%GameName%" .\util\aria\index.txt') do ( echo Press E to install or configure the English version )
-findstr /C:"%GameName%" .\util\aria\index.txt >Nul
-if %errorlevel%==0 echo Press E to install or configure the English version
+if exist ".\eXoDOS\%GameName%.zip" echo Press E to install or configure the English version
 if exist ".\eXoDOS\!dos\!French\%GameDir%\*).bat" echo Press F to install or configure the French version
 if exist ".\eXoDOS\!dos\!German\%GameDir%\*).bat" echo Press G to install or configure the German version
 if exist ".\eXoDOS\!dos\!Italian\%GameDir%\*).bat" echo Press I to install or configure the Italian version
@@ -73,29 +68,112 @@ install.bat
 cls
 
 :english
-for %%G in (".\exodos\%GameName%.zip") do set size=%%~zG
-if "%size%"=="0" del ".\exodos\%GameName%.zip"
-IF EXIST "exodos\%GameName%.zip" goto next
+for %%G in (".\eXoDOS\%GameName%.zip") do set size=%%~zG
+if "%size%"=="0" del ".\eXoDOS\%GameName%.zip"
+IF EXIST "eXoDOS\%GameName%.zip" goto next
+IF EXIST %nasconf% goto nasprompt
 
 cls
+set gigabyte=false
+set totalsizemb=0
 for /F "delims=" %%a in ('findstr /C:":%GameName%" .\util\aria\index.txt') do set fullindex=%%a
+for /F "delims=" %%b in ('findstr /C:":./GameData/eXoDOS/%GameName%" .\util\aria\index.txt') do set fullindex2=%%b
+set filesize2=%fullindex2:*:=%
+set filesizex=%filesize2:*:=%
 set filesize1=%fullindex:*:=%
 set filesize=%filesize1:*:=%
-echo filesize is %filesize%
 set removeindex=%fullindex:*:=%
 CALL set result=%%fullindex:%removeindex%=%%
 set index=%result:~0,-1%
-for /F "delims=" %%a in ('findstr /C:"GameData/eXoDOS/%GameName%" .\util\aria\index.txt') do set fullindex2=%%a
+
+IF DEFINED fullindex2 goto cont
+set combinedsize=%filesize%
+set filesizex=0Kib
+goto dl
+
+:cont
+set mediafiles=true
 set removeindex2=%fullindex2:*:=%
 CALL set result2=%%fullindex2:%removeindex2%=%%
 set index=%result:~0,-1%
 set index2=%result2:~0,-1%
+Set "gamesize2=%filesize:* =%"
+Set "contentsize2=%filesizex:* =%"
+
+REM -=remove the parenthesis=-
+set gamesize3=%gamesize2:~1,-1%
+set contentsize3=%contentsize2:~1,-1%
+
+REM -=remove the comma=-
+set gamesize4=%gamesize3:,=%
+set contentsize4=%contentsize3:,=%
+
+REM -=Preliminary unit check. If more than 1 GB, special actions needed=-
+set unit=Gb
+if %gamesize4% LSS 1000000000 set unit=Mb
+if %gamesize4% LSS 1000000 set unit=Kb
+if %gamesize4% LSS 1000 set unit=b
+if %unit%==Gb set gigabyte=true
+
+REM -=Remove the one digit if it is over 1Gb due to integer limitations in batch=-
+if %gigabyte%==true set gamesize4=%gamesize4:~0,-1%
+if %gigabyte%==true set contentsize4=%contentsize4:~0,-1%
+
+REM -=Add content size to game size to determine final download size=-
+set /a totalsize=%gamesize4%+%contentsize4%
+
+REM -=Add one's place back if it is over a Gb, as we removed it earlier=-
+if %gigabyte%==true set totalsize=%totalsize%0
+
+REM -=Determine the combined unit=-
+set unit=Gb
+if %totalsize% LSS 1000000000 set unit=Mb
+if %totalsize% LSS 1000000 set unit=Kb
+if %totalsize% LSS 1000 set unit=b
+
+REM -=This section populates the Kb, Mb, and Gb variables, to build the final on the download page=-
+set totalsizekb=%totalsize:~0,-3%
+if [%totalsizekb%]==[] set totalsizekb=%totalsize%
+
+if %gigabyte%==false set /a totalsizemb=%totalsize%/1000000
+if %gigabyte%==true set totalsizemb=%totalsize:~0,-6%
+if [%totalsizemb%]==[] set totalsizemb=%totalsize%
+
+if %gigabyte%==false set /a totalsizegb=%totalsize%/1000000000
+if %gigabyte%==true set totalsizegb=%totalsize:~0,-9%
+if [%totalsizegb%]==[] set totalsizegb=%totalsize%
+
+REM -=Based on Unit type, create the final value=-
+if %unit%==Gb set combinedsize=%totalsizegb%.%totalsizemb:~1,-1% %unit%
+if %unit%==Mb set combinedsize=%totalsizemb%.%totalsizekb:~3,-1% %unit%
+if %unit%==Kb set combinedsize=%totalsizekb% %unit%
+
+rem -=Check section, to verify values during testing=-
+rem echo filesize=%filesize%
+rem echo game size=%gamesize4%
+rem echo content size=%contentsize4%
+rem echo total size=%totalsize%
+rem echo total kb=%totalsizekb%
+rem echo total mb=%totalsizemb%
+rem echo index1 = %index%
+rem echo index2 = %index2%
+rem echo filesizex = %filesizex%
+rem echo combined size = %combinedsize%
+rem echo unit = %unit%
+rem echo gigabyte = %gigabyte%
+rem pause
+
+:dl
 .\util\setconsole.exe /reset
 cls
 echo.
 echo It appears you have not downloaded this game yet.
 echo.
 echo %GameName%'s download size is %filesize%
+if %mediafiles%==false echo There are no media files for this game.
+if %mediafiles%==true echo The media files for this game are %filesizex%
+if %mediafiles%==true echo.
+if %mediafiles%==true echo Total download will be %combinedsize%
 echo.
 echo Would you like to download it?
 echo.
@@ -105,17 +183,6 @@ If errorlevel = 2 goto end
 If errorlevel = 1 goto download
 
 :download
-IF EXIST %nasconf% goto nas
-goto torrent
-
-:nas
-set /p naspath=<%nasconf%
-call :trim %naspath% naspath
-copy "%naspath%\eXo\eXoDOS\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
-copy "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
-goto extract
-
-:torrent
 tasklist /FI "IMAGENAME eq aria2c.exe" 2>NUL | find /I /N "aria2c.exe">NUL
 if "%ERRORLEVEL%"=="0" goto inprogress
 
@@ -132,15 +199,15 @@ del aria2c.exe
 del *.aria2
 del *.torrent
 cd ..
-move ".\download\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
-move ".\download\GAMEDATA\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
-rd DOWNLOAD /S /Q
-goto extract
+move ".\DOWNLOAD\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
+move ".\DOWNLOAD\GAMEDATA\%GameName%.zip" "..\.\Content\GameData\eXoDOS\%GameName%.zip"
 
 :extract
 cd ..
-.\eXo\util\unzip -o ".\Content\GameData\eXoDOS\%GameName%.zip" -d .\
-cd exo\eXoDOS
+IF EXIST ".\Content\GameData\eXoDOS\%GameName%.zip" .\eXo\util\unzip -o ".\Content\GameData\eXoDOS\%GameName%.zip" -d .\
+cd eXo
+IF EXIST DOWNLOAD rd DOWNLOAD /S /Q
+cd eXoDOS
 for %%G in ("%GameName%.zip") do set size=%%~zG
 if "%size%"=="0" del "%GameName%.zip"
 cls
@@ -154,7 +221,7 @@ cd ..
 :next
 IF EXIST ".\eXoDOS\%GameDir%\" GOTO dele
 :unzip
-IF NOT EXIST "exodos\%GameName%.zip" goto exit
+IF NOT EXIST "eXoDOS\%GameName%.zip" goto exit
 
 if not exist ".\eXoDOS\!save\%GameName%.zip" goto unzip2
 .\util\setconsole.exe /reset
@@ -180,17 +247,22 @@ set RESTORE=Y
 :unzip2
 .\util\setconsole.exe /reset
 rem .\util\setconsole.exe /minimize
-cls
 .\util\unzip ".\eXoDOS\%GameName%.zip" -d .\eXoDOS\
 IF %RESTORE% == Y .\util\unzip -o ".\eXoDOS\!save\%GameName%.zip" -d .\eXoDOS\
-IF NOT EXIST ".\Update\!dos\%GameName%.zip" goto config
+set RUNUPDATE=N
+IF EXIST ".\Update\!dos\%GameName%.zip" set RUNUPDATE=Y
+IF EXIST ".\Update\!dos\linux\release\%GameName%.zip" set RUNUPDATE=Y
+IF EXIST ".\Update\!dos\linux\%GameName%.zip" set RUNUPDATE=Y
+IF %RUNUPDATE% == N goto config
 
 cls
 echo.
 echo An update for this game has been found. It will now be applied.
 echo.
 pause
-.\util\unzip -o ".\Update\!dos\%GameName%.zip" -d .\eXoDOS\
+IF EXIST ".\Update\!dos\%GameName%.zip" .\util\unzip -o ".\Update\!dos\%GameName%.zip" -d .\eXoDOS\
+IF EXIST ".\Update\!dos\linux\release\%GameName%.zip" .\util\unzip -o ".\Update\!dos\linux\release\%GameName%.zip" -d .\eXoDOS\
+IF EXIST ".\Update\!dos\linux\%GameName%.zip" .\util\unzip -o ".\Update\!dos\linux\%GameName%.zip" -d .\eXoDOS\
 goto config
 
 :dele
@@ -404,7 +476,7 @@ echo Would you like to backup your saves and game settings before you uninstall?
 echo.
 echo NOTE: If you choose yes, then the next time you install this game, it will ask if you
 echo would like to restore your saves and settings. These files are stored in your !save
-echo folder, in the game directory.
+echo folder, in a zip file with the same name as the game.
 echo.
 echo NOTE 2: If you have already backed up previously, this will overwrite your prior save.
 echo.
@@ -414,13 +486,55 @@ If errorlevel = 2 goto delete
 If errorlevel = 1 goto backup
 
 :backup
-cd exodos
+cd eXoDOS
 ..\.\util\zip2 --dif "..\.\eXoDOS\%GameName%.zip" -r .\%GameDir% --out "..\.\eXoDOS\!save\%GameName%.zip"
 cd ..
 
 :delete
 cmd /c rd /q /s ".\eXoDOS\%GameDir%\"
 IF EXIST %nasconf% goto rmzip
+
+:end
+cd eXoDOS
+if exist unzip.exe erase unzip.exe
+goto exit
+
+:nasprompt
+.\util\setconsole.exe /reset
+cls
+echo.
+echo It appears you have not copied this game yet.
+echo.
+echo Would you like to copy %GameName% from the network share?
+echo.
+.\util\choice /C:YN /N [Y]es or [N]o
+
+If errorlevel = 2 goto end
+If errorlevel = 1 goto nas
+goto end
+
+:nas
+set /p naspath=<%nasconf%
+if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
+if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
+IF NOT EXIST "%naspath%\eXo\eXoDOS\%GameName%.zip" goto nasmissing
+cls
+echo.
+echo Copying %GameName% from the network share...
+echo.
+copy /Y "%naspath%\eXo\eXoDOS\%GameName%.zip" ".\eXoDOS\%GameName%.zip"
+IF NOT EXIST "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" goto extract
+IF NOT EXIST "..\Content\GameData\eXoDOS\" md "..\Content\GameData\eXoDOS"
+copy /Y "%naspath%\Content\GameData\eXoDOS\%GameName%.zip" "..\Content\GameData\eXoDOS\%GameName%.zip"
+goto extract
+
+:nasmissing
+cls
+echo.
+echo %GameName% was not found on the network share:
+echo %naspath%
+echo.
+pause
 goto end
 
 :rmzip
@@ -429,23 +543,18 @@ echo.
 echo Would you like to delete the game zip files?
 echo.
 echo NOTE: If you choose yes, then the next time you install this game, you will have
-echo to download the files again.
+echo to copy the files from the network share again.
 echo.
-
-.\util\choice /C:YN? /N [Y]es or [N]o
+.\util\choice /C:YN /N [Y]es or [N]o
 
 If errorlevel = 2 goto end
 If errorlevel = 1 goto rmzipY
+goto end
 
 :rmzipY
 cmd /c del /F /Q ".\eXoDOS\%GameName%.zip"
-cmd /c del /F /Q "..\.\Content\GameData\eXoDOS\%GameName%.zip"
+cmd /c del /F /Q "..\Content\GameData\eXoDOS\%GameName%.zip"
 goto end
-
-:end
-cd eXoDOS
-if exist unzip.exe erase unzip.exe
-goto exit
 
 :inprogress
 cls
@@ -454,9 +563,5 @@ echo You are currently already downloading a game. Please complete that download
 echo before starting another one.
 echo.
 pause
-
-:trim
-SET %2=%1
-exit /B
 
 :exit

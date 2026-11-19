@@ -1,17 +1,32 @@
 :main
 set gamecnt=0
-@for %%A in (.\eXo\eXoDOS\^!*.zip) do set /a gamecnt+=1
+@for %%A in (.\eXo\eXoDOS\*.zip) do set /a gamecnt+=1
 set exolite=false
-if %gamecnt% LEQ 5000 set exolite=true
+if %gamecnt% LEQ 7000 set exolite=true
+rem Setup re-extracts the stock install.bat and update.bat, so keep the NAS versions
+findstr /C:"nasconf" .\eXo\util\install.bat >nul 2>nul
+if not errorlevel 1 (
+	if not exist .\eXo\NAS\ md .\eXo\NAS
+	copy /Y .\eXo\util\install.bat .\eXo\NAS\install.bat >nul
+)
+findstr /C:"nasconf" .\eXo\Update\update.bat >nul 2>nul
+if not errorlevel 1 (
+	if not exist .\eXo\NAS\ md .\eXo\NAS
+	copy /Y .\eXo\Update\update.bat .\eXo\NAS\update.bat >nul
+)
 set cnt=0
 set multi=false
 set content=false
+if exist .\eXo\Update\!dos\ del /Q .\eXo\Update\!dos\*.*
+if exist .\eXo\Update\!dos\linux\release del /Q .\eXo\Update\!dos\linux\release\*.*
+if exist .\eXo\Update\!dos\linux\ del /Q .\eXo\Update\!dos\linux\*.*
 if exist .\Content\*Magazines.zip set content=true
 if exist .\Content\*Books.zip set content=true
 if exist .\Content\*Catalogs.zip set content=true
 if exist .\Content\*Soundtracks.zip set content=true
-@for %%f in (.\content\^!*.zip) do set name2=%%f
-@for %%A in (.\content\^!*.zip) do set /a cnt+=1
+if exist .\Content\*Videos.zip set content=true
+@for %%f in (.\Content\^!*.zip) do set name2=%%f
+@for %%A in (.\Content\^!*.zip) do set /a cnt+=1
 cls
 @set name=%name2:~11,-12%
 if %cnt% gtr 1 set multi=true
@@ -22,9 +37,9 @@ if %cnt% gtr 1 set multi=true
 @for /f "usebackq delims== tokens=2" %%x in (`wmic logicaldisk where "DeviceID='%current%'" get FreeSpace /format:value`) do set FreeSpace=%%x
 cls
 @echo off
-if not exist launchbox.exe goto a1
+if not exist LaunchBox.exe goto a1
 set exist=true
-cd exo\util
+cd eXo\util
 if not exist util.zip unzip.exe -o -q *.zip CHOICE.EXE
 unzip.exe -o -q util.zip CHOICE.EXE
 cd ..
@@ -32,16 +47,16 @@ cd ..
 
 if %content%==false goto keeptruckin
 if %content%==true (
-	cls
-	echo.
-	echo An eXo Project is already set up in this folder and the Media Add-On Pack
-	echo has been detected. Do you want to install a full pack, or just add the
-	echo Media Add-On Pack?
-	echo.
-	.\exo\util\choice /C:FM /N [F]ull Install or just the [M]edia Add-On Pack?
-	
-	if errorlevel = 2 goto mediainstall
-	if errorlevel = 1 goto keeptruckin
+cls
+echo.
+echo An eXo Project is already set up in this folder and the Media Add-On Pack
+echo has been detected. Do you want to install a full pack, or just add the
+echo Media Add-On Pack?
+echo.
+.\eXo\util\choice /C:FM /N [F]ull Install or just the [M]edia Add-On Pack?
+
+if errorlevel = 2 goto mediainstall
+if errorlevel = 1 goto keeptruckin
 
 )
 
@@ -52,18 +67,23 @@ echo Extracting Media Add-On Pack
 echo Estimated Time: 10-15 minutes.
 echo.
 
-if exist .\content\*magazines.zip .\eXo\util\unzip -o .\Content\*magazines.zip -d .\
-if exist .\content\*books.zip .\eXo\util\unzip -o .\Content\*books.zip -d .\
-if exist .\content\*catalogs.zip .\eXo\util\unzip -o .\Content\*catalogs.zip -d .\
-if exist .\content\*soundtracks.zip .\eXo\util\unzip -o .\Content\*soundtracks.zip -d .\
+if exist .\Content\*Magazines.zip .\eXo\util\unzip -o .\Content\*Magazines.zip -d .\
+if exist .\Content\*Books.zip .\eXo\util\unzip -o .\Content\*Books.zip -d .\
+if exist .\Content\*Catalogs.zip .\eXo\util\unzip -o .\Content\*Catalogs.zip -d .\
+if exist .\Content\*Soundtracks.zip .\eXo\util\unzip -o .\Content\*Soundtracks.zip -d .\
+if exist .\Content\*Videos.zip .\eXo\util\unzip -o .\Content\*Videos.zip -d .\
+if exist ".\eXo\Catalogs\Ocean Ride the Ocean Wave! (1992).pdf" ren ".\eXo\Catalogs\Ocean Ride the Ocean Wave! (1992).pdf" "Ocean Ride the Ocean Wave (1992).pdf"
+if exist ".\eXo\Catalogs\Microprose Just for Fun! (1989).pdf" ren ".\eXo\Catalogs\Microprose Just for Fun! (1989).pdf" "Microprose Just for Fun (1989).pdf"
+if exist ".\eXo\Magazines\Gamebytes.bat" ren ".\eXo\Magazines\Gamebytes.bat" "GameBytes.bat"
 
-cd exo\util
-if exist ..\..\content\*magazines.zip eXoLBpm.exe -i - -"MS-DOS Magazines &amp; Newsletters" -Literature
-if exist ..\..\content\*books.zip eXoLBpm.exe -i - -"MS-DOS Books" -Literature
-if exist ..\..\content\*catalogs.zip eXoLBpm.exe -i - -"MS-DOS Catalogs" -Literature
-if exist ..\..\content\*soundtracks.zip eXoLBpm.exe -i - -"Soundtracks" -Audio
+cd eXo\util
+if exist ..\..\Content\*Magazines.zip eXoLBpm.exe -i - -"MS-DOS Magazines &amp; Newsletters" -Literature
+if exist ..\..\Content\*Books.zip eXoLBpm.exe -i - -"MS-DOS Books" -Literature
+if exist ..\..\Content\*Catalogs.zip eXoLBpm.exe -i - -"MS-DOS Catalogs" -Literature
+if exist ..\..\Content\*Soundtracks.zip eXoLBpm.exe -i - -"Soundtracks" -Audio
+if exist ..\..\Content\*Videos.zip eXoLBpm.exe -i - -"MS-DOS Videos" -Video
 cd ..\..
-if exist .\data\*_tmp.xml del .\data\*_tmp.xml
+if exist .\Data\*_tmp.xml del .\Data\*_tmp.xml
 
 cls
 echo.
@@ -88,13 +108,13 @@ if %multi% == false echo If you wish to merge multiple eXo packs together, pleas
 if %multi% == false echo to this folder before you run setup. If you wish to do this, please exit now and restart the Setup
 if %multi% == false echo process once all files are in their proper place.
 if %multi% == false echo.
-.\exo\util\choice /C:CE /N [C]ontinue or [E]xit
+.\eXo\util\choice /C:CE /N [C]ontinue or [E]xit
 
 if errorlevel = 2 goto end
 if errorlevel = 1 goto a1
 
 :a1
-cd exo\util
+cd eXo\util
 if not exist util.zip unzip.exe -o -q *.zip CHOICE.EXE
 if not exist CHOICE.EXE unzip.exe -o -q util.zip CHOICE.EXE
 cd ..
@@ -109,10 +129,10 @@ echo.
 if %multi% == true echo This setup will install all eXo projects whose files are in this folder. The following packs have been
 if %multi% == true echo detected:
 if %multi% == true setlocal EnableDelayedExpansion
-if %multi% == true for %%f in (".\content\^!*.zip") do (
-	set pack2=%%f
-	set pack=!pack2:~10,-12!
-	echo eXo!pack!
+if %multi% == true for %%f in (".\Content\^!*.zip") do (
+set pack2=%%f
+set pack=!pack2:~10,-12!
+echo eXo!pack!
 )
 if %multi% == true echo.
 if %multi% == true echo If you do not see a pack listed that you wish to merge, please ensure it has been copied to this folder.
@@ -127,7 +147,7 @@ if %multi% == false echo instance so that you may browse games from both packs i
 if %multi% == false echo all of the files (retaining their original folder structure) to the same folder. Then run this setup file.
 if %multi% == false echo The packs will be detected merged during the installation process.
 echo.
-.\exo\util\choice /C:CEM /N [C]ontinue, [E]xit, or [M]erge Instructions
+.\eXo\util\choice /C:CEM /N [C]ontinue, [E]xit, or [M]erge Instructions
 
 If errorlevel = 3 goto mergei
 If errorlevel = 2 goto end
@@ -150,69 +170,75 @@ goto a1
 :checks
 setlocal DisableDelayedExpansion
 if not exist .\eXo\util\util*.zip (
-	cls
-	echo.
-	echo ERROR
-	echo.
-	echo You are missing the util file. This file contains the emulators, along with several
-	echo utilities required to run the games included with this pack.
-	echo.
-	echo The file resides in the .\eXo\util\ folder
-	echo Please make sure this file has been downloaded before proceeding with setup.
-	echo.
-	echo Exiting setup
-	pause
-	goto end
+cls
+echo.
+echo ERROR
+echo.
+echo You are missing the util file. This file contains the emulators, along with several
+echo utilities required to run the games included with this pack.
+echo.
+echo The file resides in the .\eXo\util\ folder
+echo Please make sure this file has been downloaded before proceeding with setup.
+echo.
+echo Exiting setup
+pause
+goto end
 )
 
 if %content%==false (
-	cls
-	echo.
-	echo Content Add-On Pack Missing
-	echo.
-	echo A media content pack is available. This includes magazines, books,
-	echo catalogs, and soundtracks. If you wish to add these features, please download
-	echo the content pack and ensure the files are in your .\Content\ folder.
-	echo.
-	echo At that point, run the setup file again and it will detect and add these
-	echo features to your install.
-	echo.
-	pause
-	goto GameData
+cls
+echo.
+echo Content Add-On Pack Missing
+echo.
+echo A media content pack is available. This includes magazines, books,
+echo catalogs, and soundtracks. If you wish to add these features, please download
+echo the content pack and ensure the files are in your .\Content\ folder.
+echo.
+echo At that point, run the setup file again and it will detect and add these
+echo features to your install.
+echo.
+pause
+goto GameData
 )
 
 if %content%==true (
-	cls
-	echo.
-	if not exist .\Content\DOSBooks.zip echo Books Content Add-On Pack:		Missing
-	if exist .\Content\DOSBooks.zip echo Books Content Add-On Pack:			Present
-	if not exist .\Content\DOSCatalogs.zip echo Catalogs Content Add-On Pack:	Missing
-	if exist .\Content\DOSCatalogs.zip echo Catalogs Content Add-On Pack:		Present
-	if not exist .\Content\DOSMagazines.zip echo Magazines Content Add-On Pack:	Missing
-	if exist .\Content\DOSMagazines.zip echo Magazines Content Add-On Pack:		Present
-	if not exist .\Content\DOSSoundtracks.zip echo Soundtracks Content Add-On Pack:	Missing
-	if exist .\Content\DOSSoundtracks.zip echo Soundtracks Content Add-On Pack:	Present
-	echo.
-	echo A media content pack is available. This includes magazines, books,
-	echo catalogs, and soundtracks. If you wish to add these features, please download
-	echo the content pack and ensure the files are in your .\Content\ folder.
-	echo.
-	if not exist .\Content\DOSSoundtracks.zip (
-		pause
-		goto GameData
-	)
-	if not exist .\Content\DOSCatalogs.zip (
-		pause
-		goto GameData
-	)
-	if not exist .\Content\DOSBooks.zip (
-		pause
-		goto GameData
-	)
-	if not exist .\Content\DOSMagazines.zip (
-		pause
-		goto GameData
-	)
+ cls
+ echo.
+ if not exist .\Content\DOSBooks.zip echo Book Content Add-On Pack:		Missing
+ if exist .\Content\DOSBooks.zip echo Book Content Add-On Pack:		Present
+ if not exist .\Content\DOSCatalogs.zip echo Catalog Content Add-On Pack:		Missing
+ if exist .\Content\DOSCatalogs.zip echo Catalog Content Add-On Pack:		Present
+ if not exist .\Content\DOSMagazines.zip echo Magazine Content Add-On Pack:		Missing
+ if exist .\Content\DOSMagazines.zip echo Magazine Content Add-On Pack:		Present
+ if not exist .\Content\DOSSoundtracks.zip echo Soundtrack Content Add-On Pack:		Missing
+ if exist .\Content\DOSSoundtracks.zip echo Soundtrack Content Add-On Pack:		Present
+ if exist .\Content\DOSVideos.zip echo Video Content Add-On Pack:		Present
+ if not exist .\Content\DOSVideos.zip echo Video Content Add-On Pack:		Missing
+ echo.
+ echo A media content pack is available. This includes magazines, books,
+ echo catalogs, and soundtracks. If you wish to add these features, please download
+ echo the content pack and ensure the files are in your .\Content\ folder.
+ echo.
+ if not exist .\Content\DOSSoundtracks.zip (
+ pause
+ goto GameData
+ )
+ if not exist .\Content\DOSCatalogs.zip (
+ pause
+ goto GameData
+ )
+ if not exist .\Content\DOSBooks.zip (
+ pause
+ goto GameData
+ )
+ if not exist .\Content\DOSMagazines.zip (
+ pause
+ goto GameData
+ )
+ if not exist .\Content\DOSVideos.zip (
+ pause
+ goto GameData
+ )
 )
 
 :GameData
@@ -254,24 +280,24 @@ goto end
 
 :lbcheck
 if not exist .\Content\LaunchBox.zip (
-	cls
-	echo.
-	echo ERROR
-	echo.
-	echo You are missing the LaunchBox.zip file.
-	echo Without this, you will have no front end.
-	echo.
-	echo This file should be in your .\Content\ folder.
-	echo.
-	echo If you plan to use a different front end or no front end at all, you can choose
-	echo to continue.
-	echo.
-	goto check
+cls
+echo.
+echo ERROR
+echo.
+echo You are missing the LaunchBox.zip file.
+echo Without this, you will have no front end.
+echo.
+echo This file should be in your .\Content\ folder.
+echo.
+echo If you plan to use a different front end or no front end at all, you can choose
+echo to continue.
+echo.
+goto check
 )
 
 if %multi% == true if not exist .\Content\XO*Metadata.zip goto m2error
 if %multi% == false if not exist .\Content\XO%name%Metadata.zip goto m2error
-goto verified
+goto verify
 
 :m2error
 cls
@@ -298,12 +324,12 @@ if %multi% == false echo of %name% zip files and a !%name% folder full of config
 if %multi% == true echo of zip files and a folder full of config files and game launch files.
 echo Do not use this method if you aren't 100%% sure of what you are doing.
 echo. 
-.\exo\util\choice /C:YN /N [Y]es or [N]o
+.\eXo\util\choice /C:YN /N (Y)es or (N)o
 
 If errorlevel = 2 goto end
-If errorlevel = 1 goto skip
+If errorlevel = 1 goto skip_lb
 
-:verified
+:verify
 cls
 set x64=false
 rem wmic os get osarchitecture > oscheck.txt
@@ -311,13 +337,31 @@ rem systeminfo | findstr /I type: > oscheck.txt
 cmd /c "echo %PROCESSOR_ARCHITECTURE%" > oscheck.txt
 for /F %%a in ('findstr /C:AMD64 oscheck.txt') do set x64=true
 del oscheck.txt
-if %x64%==false echo.
-if %x64%==false echo This machine is not reporting itself as 64 bit. LaunchBox, the front end,
-if %x64%==false echo will only run on a 64 bit machine. 
-if %x64%==false echo.
-if %x64%==false pause
-if %x64%==false goto skip_lb
 
+if %x64%==false goto 64check
+goto verified
+
+:64check
+cls
+echo.
+echo This machine is not reporting itself as 64 bit. LaunchBox, the front end,
+echo will only run on a 64 bit machine. 
+echo. 
+echo There is a chance that your machine *is* 64 bit, and everything will function
+echo fine. There are a handful of machines that do not report this normally.
+echo If you believe your machine is 64 bit, then please choose Yes below.
+echo.
+echo Would you like to continue installing LaunchBox?
+echo.
+echo Press (Y)es to install everything
+echo Press (N)o to only install the games, but not LaunchBox (the front end)
+echo.
+.\eXo\util\choice /C:YN /N (Y)es or (N)o
+
+If errorlevel = 2 goto skip_lb
+If errorlevel = 1 goto verified
+
+:verified
 cls
 echo.
 echo All files verified.
@@ -337,7 +381,7 @@ goto continue
 
 :skip_lb
 echo.
-echo Installation will now continue, but please be aware that the front-end will not
+echo Installation will now continue, but please be aware that the front-end may not
 echo be functional on this machine. You may still run the games manually by navigating
 echo to the games launch folder and running the launch file manually. These can be found
 echo in:
@@ -376,10 +420,14 @@ echo                 The full thing will take about an hour.
 echo.
 pause
 
-if exist .\content\*magazines.zip .\eXo\util\unzip -o .\Content\*magazines.zip -d .\
-if exist .\content\*books.zip .\eXo\util\unzip -o .\Content\*books.zip -d .\
-if exist .\content\*catalogs.zip .\eXo\util\unzip -o .\Content\*catalogs.zip -d .\
-if exist .\content\*soundtracks.zip .\eXo\util\unzip -o .\Content\*soundtracks.zip -d .\
+if exist .\Content\*Magazines.zip .\eXo\util\unzip -o .\Content\*Magazines.zip -d .\
+if exist .\Content\*Books.zip .\eXo\util\unzip -o .\Content\*Books.zip -d .\
+if exist .\Content\*Catalogs.zip .\eXo\util\unzip -o .\Content\*Catalogs.zip -d .\
+if exist .\Content\*Soundtracks.zip .\eXo\util\unzip -o .\Content\*Soundtracks.zip -d .\
+if exist .\Content\*Videos.zip .\eXo\util\unzip -o .\Content\*Videos.zip -d .\
+if exist ".\eXo\Catalogs\Ocean Ride the Ocean Wave! (1992).pdf" ren ".\eXo\Catalogs\Ocean Ride the Ocean Wave! (1992).pdf" "Ocean Ride the Ocean Wave (1992).pdf"
+if exist ".\eXo\Catalogs\Microprose Just for Fun! (1989).pdf" ren ".\eXo\Catalogs\Microprose Just for Fun! (1989).pdf" "Microprose Just for Fun (1989).pdf"
+if exist ".\eXo\Magazines\Gamebytes.bat" ren ".\eXo\Magazines\Gamebytes.bat" "GameBytes.bat"
 
 :step3
 cls
@@ -392,13 +440,13 @@ echo.
 pause
 
 for /F %%a in ('dir .\Content\GameData\ /A:D /B') DO (
-	.\eXo\util\unzip -o .\Content\GameData\%%a\*.zip -d .\
+.\eXo\util\unzip -o .\Content\GameData\%%a\*.zip -d .\
 )
 .\eXo\util\unzip -o .\Content\!*metadata.zip -d .\
 
 IF %EXIST% == false goto :skip
 :cleanup
-cd exo
+cd eXo
 cd util
 copy unzip.exe ..
 for /f %%F in ('dir /b /a-d ^| findstr /vile ".zip .bat"') do del "%%F"
@@ -423,8 +471,8 @@ del .\util\EXT*.zip
 .\util\unzip -o .\util\util.zip SetConsole.exe -d .\util\
 if not exist .\util\scummvm.ini goto skipsvm
 if not exist %USERPROFILE%\AppData\Roaming\ScummVM\scummvm.ini (
-	md %USERPROFILE%\AppData\Roaming\ScummVM
-	copy .\util\scummvm.ini %USERPROFILE%\AppData\Roaming\ScummVM\scummvm.ini
+md %USERPROFILE%\AppData\Roaming\ScummVM
+copy .\util\scummvm.ini %USERPROFILE%\AppData\Roaming\ScummVM\scummvm.ini
 )
 :skipsvm
 cd ..
@@ -443,13 +491,13 @@ echo will remove them from the front end, but not remove them from your hard dri
 echo.
 echo If they have previously been removed, choosing NO here will restore them in the front end.
 echo. 
-.\eXo\util\choice /C:NY /N [Y]es or [N]o
+.\eXo\util\choice /C:NY /N (Y)es or (N)o
 
 If errorlevel = 2 goto YESA
 If errorlevel = 1 goto NOA
 
 :NOA
-if exist .\xml\ALL\*.xml copy .\xml\ALL\*.xml .\Data\Platforms\
+if exist .\xml\all\*.xml copy .\xml\all\*.xml .\Data\Platforms\
 copy .\xml\Playlists\*.* .\Data\Playlists\
 cd xml
 call merge_parents
@@ -458,8 +506,7 @@ cd ..
 copy .\xml\Platforms.xml .\Data\
 copy .\xml\Parents.xml .\Data\
 if exist .\xml\MS-DOS.xml del .\xml\MS-DOS.xml
-cd .\exo\util
-call fix_names
+cd .\eXo\util
 goto screen
 
 :YESA
@@ -472,7 +519,7 @@ cd ..
 copy .\xml\Platforms.xml .\Data\
 copy .\xml\Parents.xml .\Data\
 if exist .\xml\MS-DOS.xml del .\xml\MS-DOS.xml
-cd .\exo\util
+cd .\eXo\util
 call fix_names
 goto screen
 
@@ -583,7 +630,7 @@ if %exolite%==true (
 	echo Would you like to enable downloading from a network share instead of torrent?
 	echo.
 	echo Choosing Yes will attempt to set a network share location for the full eXoDOS
-	echo location, to use for downloading games form instead of using the torrent, when
+	echo location, to use for downloading games from instead of using the torrent, when
 	echo eXoDOS Lite is installed and the game has not yet been downloaded.
 	echo.
 	echo Choosing No will leave the default of using torrent downloads.
@@ -597,8 +644,15 @@ goto nasN
 
 :nasY
 cls
-set /P naspath=Enter Full Network Share Path: 
-echo %naspath% > ".\util\nas.conf"
+set /P naspath=Enter Full Network Share Path:
+if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
+>".\util\nas.conf" echo %naspath%
+if exist .\NAS\install.bat copy /Y .\NAS\install.bat .\util\install.bat >nul
+if exist .\NAS\update.bat copy /Y .\NAS\update.bat .\Update\update.bat >nul
+if not exist .\NAS\install.bat echo WARNING: The NAS version of install.bat was not found.
+if not exist .\NAS\update.bat echo WARNING: The NAS version of update.bat was not found.
+if not exist "%naspath%\eXo\eXoDOS\" echo WARNING: No eXoDOS games were found at %naspath%
+if not exist "%naspath%\eXo\eXoDOS\" pause
 goto ini
 
 :nasN
@@ -608,15 +662,16 @@ goto ini
 
 :ini
 cd ..
-rem echo %cd%\launchbox.exe > eXo.bat
-rem .\exo\util\B2E /bat eXo.bat /exe eXo.exe /icon .\exo\util\exodos.ico
+rem echo %cd%\LaunchBox.exe > eXo.bat
+rem .\eXo\util\B2E /bat eXo.bat /exe eXo.exe /icon .\eXo\util\exodos.ico
 rem del exo.bat
 
-cd exo\util
-if exist ..\..\content\*magazines.zip eXoLBpm.exe -i - -"MS-DOS Magazines &amp; Newsletters" -Literature
-if exist ..\..\content\*books.zip eXoLBpm.exe -i - -"MS-DOS Books" -Literature
-if exist ..\..\content\*catalogs.zip eXoLBpm.exe -i - -"MS-DOS Catalogs" -Literature
-if exist ..\..\content\*soundtracks.zip eXoLBpm.exe -i - -"Soundtracks" -Audio
+cd eXo\util
+if exist ..\..\Content\*Magazines.zip eXoLBpm.exe -i - -"MS-DOS Magazines &amp; Newsletters" -Literature
+if exist ..\..\Content\*Books.zip eXoLBpm.exe -i - -"MS-DOS Books" -Literature
+if exist ..\..\Content\*Catalogs.zip eXoLBpm.exe -i - -"MS-DOS Catalogs" -Literature
+if exist ..\..\Content\*Soundtracks.zip eXoLBpm.exe -i - -"Soundtracks" -Audio
+if exist ..\..\Content\*Videos.zip eXoLBpm.exe -i - -"MS-DOS Videos" -Video
 cls
 cd ..\..
 
@@ -630,7 +685,7 @@ rem echo.
 echo.
 echo Would you like to create an icon on your desktop?
 echo.
-.\exo\util\choice /C:YN /N [Y]es or [N]o
+.\eXo\util\choice /C:YN /N [Y]es or [N]o
 
 If errorlevel = 2 goto end
 If errorlevel = 1 goto shortcut
