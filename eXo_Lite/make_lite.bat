@@ -11,6 +11,10 @@ if /i "%project%"=="eXoDREAMM" (
 	set project=eXoDREAMM
 	set games=eXoDREAMM
 )
+if /i "%project%"=="eXoScummVM" (
+	set project=eXoScummVM
+	set games=eXoScummVM
+)
 if not defined games (
 	echo %project% is not supported yet.
 	goto usage
@@ -57,5 +61,5 @@ exit /B 1
 
 :usage
 echo Usage: make_lite.bat PROJECT "FULL PROJECT FOLDER" "NEW LITE FOLDER"
-echo Supported projects: eXoDREAMM
+echo Supported projects: eXoDREAMM, eXoScummVM
 exit /B 1

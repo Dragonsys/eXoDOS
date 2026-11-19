@@ -1,0 +1,176 @@
+diff --git a/Setup eXoScummVM.bat b/Setup eXoScummVM.bat
+index 1970cc5..f2a6eec 100644
+--- a/Setup eXoScummVM.bat	
++++ b/Setup eXoScummVM.bat	
+@@ -1,3 +1,14 @@
++:main
++set gamecnt=0
++@for %%A in (.\eXo\eXoScummVM\*.zip) do set /a gamecnt+=1
++set exolite=false
++if %gamecnt% LSS 101 set exolite=true
++rem Setup re-extracts the stock install_svm.bat, so keep the NAS version
++findstr /C:"nasconf" .\eXo\util\install_svm.bat >nul 2>nul
++if not errorlevel 1 (
++	if not exist .\eXo\NAS\ md .\eXo\NAS
++	copy /Y .\eXo\util\install_svm.bat .\eXo\NAS\install_svm.bat >nul
++)
+ set cnt=0
+ set multi=false
+ set content=false
+@@ -590,13 +601,49 @@ cls
+ if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=false aspect=true .\emulators\dosbox\options.conf
+ if exist ".\util\ANO.SEL" del ".\util\ANO.SEL"
+ echo > ".\util\AYES.SEL"
+-goto ini
++goto nas
+ 
+ :aspectN
+ cls
+ if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=true aspect=false .\emulators\dosbox\options.conf
+ if exist ".\util\AYES.SEL" del ".\util\AYES.SEL"
+ echo > ".\util\ANO.SEL"
++goto nas
++
++:nas
++if %exolite%==false goto nasN
++cls
++echo.
++echo %cpress%Would you like to install eXoScummVM games from a network share?
++echo.
++echo Choosing Yes will copy each game from the full eXoScummVM folder on your network
++echo share the first time you install it.
++echo.
++echo Choosing No will leave eXoScummVM unchanged.
++echo %cchoice%
++.\util\choice /C:YN /N [Y]es or [N]o
++
++If errorlevel = 2 goto nasN
++If errorlevel = 1 goto nasY
++goto nasN
++
++:nasY
++cls
++echo %cpress%
++set naspath=
++set /P naspath=Enter the full path of the eXoScummVM folder on the network share: 
++if not defined naspath goto nasN
++if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
++>".\util\nas_eXoScummVM.conf" echo %naspath%
++if exist .\NAS\install_svm.bat copy /Y .\NAS\install_svm.bat .\util\install_svm.bat >nul
++if not exist .\NAS\install_svm.bat echo WARNING: The NAS version of install_svm.bat was not found.
++if not exist "%naspath%\eXo\eXoScummVM\" echo WARNING: No eXoScummVM games were found at %naspath%
++if not exist "%naspath%\eXo\eXoScummVM\" pause
++goto ini
++
++:nasN
++cls
++if exist ".\util\nas_eXoScummVM.conf" del ".\util\nas_eXoScummVM.conf"
+ goto ini
+ 
+ :ini
+diff --git a/install_svm.bat b/install_svm.bat
+index 7d0648f..39131cb 100644
+--- a/install_svm.bat
++++ b/install_svm.bat
+@@ -1,6 +1,7 @@
+ cd %FOLDER%
+ @echo off 
+ set CONF=%CD%
++set nasconf=.\util\nas_eXoScummVM.conf
+ for %%I in (.) do set GameDir=%%~nxI
+ for %%f in (*^).bat) do set GameName2=%%f
+ set GameName=%GameName2:~0,-4%
+@@ -12,6 +13,7 @@ call .\util\theme.bat
+ echo %cback%%cwipe%
+ 
+ IF EXIST ".\eXoScummVM\%GameName%.zip" goto next
++IF EXIST %nasconf% goto nasprompt
+ goto exit
+ 
+ :next
+@@ -208,10 +210,84 @@ goto config2
+ 
+ :erase
+ rd /q /s ".\eXoScummVM\%GameDir%\"
++IF EXIST %nasconf% goto rmzip
+ 
+ :end
+ cd eXoScummVM
+ if exist unzip.exe erase unzip.exe
++goto exit
++
++:nasprompt
++.\util\setconsole.exe /reset
++cls
++echo. %cback%%cwipe%
++echo %cnote%This game has not been copied from the network share yet.
++echo.
++echo %cpress%Would you like to copy %GameName% now?
++echo %cchoice%
++.\util\choice /C:YN /N [Y]es or [N]o
++
++If errorlevel = 2 goto nasdecline
++If errorlevel = 1 goto nas
++goto nasdecline
++
++:nasdecline
++echo %cclear%
++goto exit
++
++:nas
++echo %cclear%
++set naspath=
++set /p naspath=<%nasconf%
++if not defined naspath goto nasmissing
++if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
++if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
++IF NOT EXIST "%naspath%\eXo\eXoScummVM\%GameName%.zip" goto nasmissing
++cls
++echo.
++echo Copying %GameName% from the network share...
++echo.
++copy /Y "%naspath%\eXo\eXoScummVM\%GameName%.zip" ".\eXoScummVM\%GameName%.zip"
++if errorlevel 1 goto nasfailed
++goto next
++
++:nasfailed
++if exist ".\eXoScummVM\%GameName%.zip" del ".\eXoScummVM\%GameName%.zip"
++cls
++echo.
++echo %GameName% could not be copied from the network share.
++echo.
++pause
++goto exit
++
++:nasmissing
++cls
++echo.
++echo %GameName% was not found on the network share:
++echo %naspath%
++echo.
++pause
++goto exit
+ 
++:rmzip
++cls
++echo.
++echo %cpress%Would you like to delete the game zip file?
++echo.
++echo %cnote%NOTE: If you choose yes, the game will be copied from the network share again
++echo the next time you install it.
++echo %cchoice%
++.\util\choice /C:YN /N [Y]es or [N]o
++
++If errorlevel = 2 goto rmzipN
++If errorlevel = 1 goto rmzipY
++goto rmzipN
++
++:rmzipY
++cmd /c del /F /Q ".\eXoScummVM\%GameName%.zip"
++
++:rmzipN
++echo %cclear%
++goto end
+ 
+ :exit
+\ No newline at end of file

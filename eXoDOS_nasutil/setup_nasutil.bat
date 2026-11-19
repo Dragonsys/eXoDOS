@@ -4,6 +4,7 @@ rem Each project: name, games folder, most zips a Lite copy can have, settings f
 set configured=0
 if exist "..\..\..\Setup eXoDOS.bat" call :configure eXoDOS eXoDOS 7000 nas.conf install.bat install.nas
 if exist "..\..\..\Setup eXoDREAMM.bat" call :configure eXoDREAMM eXoDREAMM 30 nas_eXoDREAMM.conf install_drm.bat install_drm.nas
+if exist "..\..\..\Setup eXoScummVM.bat" call :configure eXoScummVM eXoScummVM 100 nas_eXoScummVM.conf install_svm.bat install_svm.nas
 if %configured%==0 (
 	cls
 	echo.
