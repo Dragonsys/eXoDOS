@@ -5,6 +5,7 @@ set configured=0
 if exist "..\..\..\Setup eXoDOS.bat" call :configure eXoDOS eXoDOS 7000 nas.conf install.bat install.nas
 if exist "..\..\..\Setup eXoDREAMM.bat" call :configure eXoDREAMM eXoDREAMM 30 nas_eXoDREAMM.conf install_drm.bat install_drm.nas "launch_drm.bat launch_drm_verify.bat"
 if exist "..\..\..\Setup eXoScummVM.bat" call :configure eXoScummVM eXoScummVM 100 nas_eXoScummVM.conf install_svm.bat install_svm.nas "launch_svm.bat"
+if exist "..\..\..\Setup eXoWin9x.bat" call :configure eXoWin9x eXoWin9x 100 nas_eXoWin9x.conf install9x.bat install9x.nas "9xlaunch.bat 9xlaunch86Box.bat 9xlaunch86BoxME.bat 9xlaunchPCBox.bat 9xSetup86BoxME.bat"
 if %configured%==0 (
 	cls
 	echo.

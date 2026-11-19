@@ -1,0 +1,244 @@
+diff --git a/9xSetup86BoxME.bat b/9xSetup86BoxME.bat
+index 97f71af..03c422d 100644
+--- a/9xSetup86BoxME.bat
++++ b/9xSetup86BoxME.bat
+@@ -40,6 +40,7 @@ call install.bat
+ rem cd ..
+ .\util\setconsole.exe /minimize
+ cls
++IF NOT EXIST ".\eXoWin9x\%yeardir%\%GameDir%\" goto end
+ goto launch
+ 
+ :no
+diff --git a/9xlaunch.bat b/9xlaunch.bat
+index f2c0a2c..afc0de0 100644
+--- a/9xlaunch.bat
++++ b/9xlaunch.bat
+@@ -139,6 +139,7 @@ call install.bat
+ rem cd ..
+ .\util\setconsole.exe /minimize
+ cls
++IF NOT EXIST ".\eXoWin9x\%yeardir%\%GameDir%\" goto end
+ goto settings
+ 
+ :no
+diff --git a/9xlaunch86Box.bat b/9xlaunch86Box.bat
+index a63a8de..eb21868 100644
+--- a/9xlaunch86Box.bat
++++ b/9xlaunch86Box.bat
+@@ -41,6 +41,7 @@ call install.bat
+ rem cd ..
+ .\util\setconsole.exe /minimize
+ cls
++IF NOT EXIST ".\eXoWin9x\%yeardir%\%GameDir%\" goto end
+ goto launch
+ 
+ :no
+diff --git a/9xlaunch86BoxME.bat b/9xlaunch86BoxME.bat
+index 2d0410d..ea6c7dc 100644
+--- a/9xlaunch86BoxME.bat
++++ b/9xlaunch86BoxME.bat
+@@ -41,6 +41,7 @@ call install.bat
+ rem cd ..
+ .\util\setconsole.exe /minimize
+ cls
++IF NOT EXIST ".\eXoWin9x\%yeardir%\%GameDir%\" goto end
+ goto launch
+ 
+ :no
+diff --git a/9xlaunchPCBox.bat b/9xlaunchPCBox.bat
+index a5d949a..41b4562 100644
+--- a/9xlaunchPCBox.bat
++++ b/9xlaunchPCBox.bat
+@@ -39,6 +39,7 @@ call install.bat
+ rem cd ..
+ .\util\setconsole.exe /minimize
+ cls
++IF NOT EXIST ".\eXoWin9x\%yeardir%\%GameDir%\" goto end
+ goto launch
+ 
+ :no
+diff --git a/Setup eXoWin9x.bat b/Setup eXoWin9x.bat
+index a1e17a3..233e435 100644
+--- a/Setup eXoWin9x.bat	
++++ b/Setup eXoWin9x.bat	
+@@ -1,3 +1,14 @@
++:main
++set gamecnt=0
++@for /D %%Y in (.\eXo\eXoWin9x\????) do @for %%A in ("%%Y\*.zip") do set /a gamecnt+=1
++set exolite=false
++if %gamecnt% LEQ 100 set exolite=true
++rem Setup re-extracts the stock scripts, so keep the NAS versions
++findstr /C:"nasconf" .\eXo\util\install9x.bat >nul 2>nul
++if not errorlevel 1 (
++	if not exist .\eXo\NAS\ md .\eXo\NAS
++	for %%F in (install9x.bat 9xlaunch.bat 9xlaunch86Box.bat 9xlaunch86BoxME.bat 9xlaunchPCBox.bat 9xSetup86BoxME.bat) do copy /Y .\eXo\util\%%F .\eXo\NAS\%%F >nul
++)
+ set cnt=0
+ set multi=false
+ set content=false
+@@ -620,7 +631,7 @@ if exist .\emulators\dosbox\options9x.conf .\util\ssr 0 aspect=false aspect=true
+ if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=false aspect=true .\emulators\dosbox\options.conf
+ if exist ".\util\ANO.SEL" del ".\util\ANO.SEL"
+ echo > ".\util\AYES.SEL"
+-goto ini
++goto nas
+ 
+ :aspectN
+ cls
+@@ -628,6 +639,42 @@ if exist .\emulators\dosbox\options9x.conf .\util\ssr 0 aspect=true aspect=false
+ if exist .\emulators\dosbox\options.conf .\util\ssr 0 aspect=true aspect=false .\emulators\dosbox\options.conf
+ if exist ".\util\AYES.SEL" del ".\util\AYES.SEL"
+ echo > ".\util\ANO.SEL"
++goto nas
++
++:nas
++if %exolite%==false goto nasN
++cls
++echo.
++echo %cpress%Would you like to install eXoWin9x games from a network share?
++echo.
++echo Choosing Yes will copy each game from the full eXoWin9x folder on your network
++echo share the first time you install it.
++echo.
++echo Choosing No will leave eXoWin9x unchanged.
++echo %cchoice%
++.\util\choice /C:YN /N [Y]es or [N]o
++
++If errorlevel = 2 goto nasN
++If errorlevel = 1 goto nasY
++goto nasN
++
++:nasY
++cls
++echo %cpress%
++set naspath=
++set /P naspath=Enter the full path of the eXoWin9x folder on the network share: 
++if not defined naspath goto nasN
++if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
++>".\util\nas_eXoWin9x.conf" echo %naspath%
++for %%F in (install9x.bat 9xlaunch.bat 9xlaunch86Box.bat 9xlaunch86BoxME.bat 9xlaunchPCBox.bat 9xSetup86BoxME.bat) do if exist .\NAS\%%F copy /Y .\NAS\%%F .\util\%%F >nul
++if not exist .\NAS\install9x.bat echo WARNING: The NAS version of install9x.bat was not found.
++if not exist "%naspath%\eXo\eXoWin9x\" echo WARNING: No eXoWin9x games were found at %naspath%
++if not exist "%naspath%\eXo\eXoWin9x\" pause
++goto ini
++
++:nasN
++cls
++if exist ".\util\nas_eXoWin9x.conf" del ".\util\nas_eXoWin9x.conf"
+ goto ini
+ 
+ :ini
+diff --git a/install9x.bat b/install9x.bat
+index 47c22b0..aef900b 100644
+--- a/install9x.bat
++++ b/install9x.bat
+@@ -1,6 +1,7 @@
+ cd %FOLDER%
+ @echo off
+ set CONF=%CD%
++set nasconf=.\util\nas_eXoWin9x.conf
+ for %%I in (.) do set GameDir=%%~nxI
+ for %%f in (*^).bat) do set GameName2=%%f
+ set GameName=%GameName2:~0,-4%
+@@ -15,7 +16,11 @@ call .\util\theme.bat
+ :next
+ IF EXIST ".\eXoWin9x\%RYEAR%\%GameDir%\" GOTO dele
+ :unzip
+-IF NOT EXIST "eXoWin9x\%RYEAR%\%GameName%.zip" goto exit
++IF EXIST "eXoWin9x\%RYEAR%\%GameName%.zip" goto unzipgame
++IF EXIST %nasconf% goto nasprompt
++goto exit
++
++:unzipgame
+ copy .\util\unzip.exe .\eXoWin9x\%RYEAR%\unzip.exe
+ cd eXoWin9x\%RYEAR%
+ unzip "%GameName%.zip"
+@@ -203,6 +208,7 @@ goto end
+ 
+ :erase
+ rd /q /s ".\eXoWin9x\%RYEAR%\%GameDir%\"
++IF EXIST %nasconf% goto rmzip
+ 
+ :end
+ cd eXoWin9x\%RYEAR%
+@@ -210,4 +216,78 @@ if exist unzip.exe erase unzip.exe
+ cd ..\..
+ goto exit
+ 
++:nasprompt
++.\util\setconsole.exe /reset
++cls
++echo. %cback%%cwipe%
++echo %cnote%This game has not been copied from the network share yet.
++echo.
++echo %cpress%Would you like to copy %GameName% now?
++echo %cchoice%
++.\util\choice /C:YN /N [Y]es or [N]o
++
++If errorlevel = 2 goto nasdecline
++If errorlevel = 1 goto nas
++goto nasdecline
++
++:nasdecline
++echo %cclear%
++goto exit
++
++:nas
++echo %cclear%
++set naspath=
++set /p naspath=<%nasconf%
++if not defined naspath goto nasmissing
++if "%naspath:~-1%"==" " set naspath=%naspath:~0,-1%
++if "%naspath:~-1%"=="\" set naspath=%naspath:~0,-1%
++IF NOT EXIST "%naspath%\eXo\eXoWin9x\%RYEAR%\%GameName%.zip" goto nasmissing
++cls
++echo.
++echo Copying %GameName% from the network share...
++echo.
++IF NOT EXIST ".\eXoWin9x\%RYEAR%\" md ".\eXoWin9x\%RYEAR%"
++copy /Y "%naspath%\eXo\eXoWin9x\%RYEAR%\%GameName%.zip" ".\eXoWin9x\%RYEAR%\%GameName%.zip"
++if errorlevel 1 goto nasfailed
++goto unzipgame
++
++:nasfailed
++if exist ".\eXoWin9x\%RYEAR%\%GameName%.zip" del ".\eXoWin9x\%RYEAR%\%GameName%.zip"
++cls
++echo.
++echo %GameName% could not be copied from the network share.
++echo.
++pause
++goto exit
++
++:nasmissing
++cls
++echo.
++echo %GameName% was not found on the network share:
++echo %naspath%
++echo.
++pause
++goto exit
++
++:rmzip
++cls
++echo.
++echo %cpress%Would you like to delete the game zip file?
++echo.
++echo %cnote%NOTE: If you choose yes, the game will be copied from the network share again
++echo the next time you install it.
++echo %cchoice%
++.\util\choice /C:YN /N [Y]es or [N]o
++
++If errorlevel = 2 goto rmzipN
++If errorlevel = 1 goto rmzipY
++goto rmzipN
++
++:rmzipY
++cmd /c del /F /Q ".\eXoWin9x\%RYEAR%\%GameName%.zip"
++
++:rmzipN
++echo %cclear%
++goto end
++
+ :exit
+\ No newline at end of file

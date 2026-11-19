@@ -21,7 +21,7 @@ Built on the stock eXoDOS v6.04 files.
 
 ## /eXoDOS_nasutil
 - quick addon used to install & setup NAS support after Setup has already been run
-- Supports eXoDOS v6.04 Lite, eXoDREAMM Lite and eXoScummVM Lite, including merged installs
+- Supports eXoDOS v6.04 Lite, eXoDREAMM Lite, eXoScummVM Lite and eXoWin9x Lite, including merged installs
 - Run setup_nasutil.bat from eXo\util\eXoDOS_nasutil
 
 ## /eXoDREAMM
@@ -36,9 +36,16 @@ Built on the stock eXoScummVM files. Games are copied from the full eXoScummVM f
 - eXo/util/install_svm.bat - Added the NAS copy step and an option to delete the local zip on uninstall
 - nas.patch - The same changes as a diff against the stock files
 
+## /eXoWin9x
+Built on the stock eXoWin9x files. Games are copied from the matching year folder of the full eXoWin9x folder on the NAS the first time they are installed.
+- Setup eXoWin9x.bat - Added the network share question for Lite copies
+- eXo/util/install9x.bat - Added the NAS copy step and an option to delete the local zip on uninstall
+- eXo/util/9x*.bat - Launchers no longer try to start a game that was not installed
+- nas.patch - The same changes as a diff against the stock files
+
 ## /eXo_Lite
 - make_lite.bat - creates a Lite copy of a project without its game zips and adds the NAS scripts from this repo
-- Currently supports eXoDREAMM and eXoScummVM
+- Currently supports eXoDREAMM, eXoScummVM and eXoWin9x
 ### Example
 ```bat
 make_lite.bat eXoDREAMM "\\192.168.1.10\Media\Games\eXo\eXoDREAMM" "D:\eXoDREAMM_Lite"
@@ -52,4 +59,4 @@ Then run Setup eXoDREAMM.bat in the new folder, answer Yes to the network share 
 - TBD
 
 ## To Create
-- Lite edition of eXoWin9x
+- Lite edition of eXoWin3x
