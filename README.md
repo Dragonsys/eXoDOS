@@ -55,6 +55,11 @@ Then run Setup eXoDREAMM.bat in the new folder, answer Yes to the network share 
 ## /eXo_Project_Merge
 - OpenFolderBox.exe - used to make source folders selectable with a Windows GUI
 - merge_projects.bat - copy all eXo Projects to a single install folder and run the installer which merges them into a single install. Run it from the destination folder
+- merge_eXo.bat - merges every supported project into one new folder in a single run. It asks for Regular or Lite, the folder that holds the project folders (for example \\192.168.1.10\Media\Games\eXo) and the destination, then copies the projects, runs Setup once and, for Lite, sets up the NAS game copies for each project. Run it from this repo, since Lite merges use the NAS scripts in the project folders here
+  - Regular: full copies of eXoWin3x, eXoDOS, eXoDREAMM, eXoScummVM, eXoDemoScene, eXoIF and eXoWin9x
+  - Lite: eXoDOS (the official eXoDOS_Lite folder when present), eXoDREAMM, eXoScummVM and eXoWin9x without their games, with optional full copies of the projects that have no Lite version
+  - Offers the eXoDOS Media Pack when it is found
+  - merge_eXo.bat /dryrun lists what would be copied without changing anything
 ### TODO
 - TBD
 
