@@ -52,13 +52,25 @@ make_lite.bat eXoDREAMM "\\192.168.1.10\Media\Games\eXo\eXoDREAMM" "D:\eXoDREAMM
 ```
 Then run Setup eXoDREAMM.bat in the new folder, answer Yes to the network share question, and enter the full eXoDREAMM folder.
 
+## /eXoDOS_MediaLite
+A Lite edition of the eXoDOS Media Pack, about 2 GB instead of about 240 GB. It keeps the LaunchBox images, platform lists and small launch files. The books, catalogs, magazines, soundtracks and videos stay on the NAS, and each one is copied the first time it is opened.
+- make_media_lite.bat - makes the Lite zips from the full Media Pack. Put the files from its Content folder in the Content folder of an eXoDOS install and run Setup again, the same as the full Media Pack
+- make_media_lite.ps1 - does the work for make_media_lite.bat. Use -Report to only list what would be kept and left on the share
+- media_nas.bat - goes in eXo\util. LaunchBox opens every Lite item through it. It copies the item from the Media Pack zips on the share the first time, then opens it. The share folder is asked for on first use and saved in eXo\util\nas_media.conf
+- Items are copied whole: a book's or video's folder, one magazine PDF, one cover disc or issue folder, or one soundtrack zip. Big Blue Disk and GameBytes stay local because all their issues share one folder
+- Media that no LaunchBox item uses (about 1.6 GB) is left out
+- The King's Quest V soundtrack entry in the stock pack points at a file name that is not in the zip, so it is left as it is
+```
+make_media_lite.bat "\\192.168.1.10\Media\Games\eXo\eXoDOS Media Pack\eXoDOS" "D:\eXoDOS Media Pack Lite"
+```
+
 ## /eXo_Project_Merge
 - OpenFolderBox.exe - used to make source folders selectable with a Windows GUI
 - merge_projects.bat - copy all eXo Projects to a single install folder and run the installer which merges them into a single install. Run it from the destination folder
 - merge_eXo.bat - merges every supported project into one new folder in a single run. It asks for Regular or Lite, the folder that holds the project folders (for example \\192.168.1.10\Media\Games\eXo) and the destination, then copies the projects, runs Setup once and, for Lite, sets up the NAS game copies for each project. Run it from this repo, since Lite merges use the NAS scripts in the project folders here
   - Regular: full copies of eXoWin3x, eXoDOS, eXoDREAMM, eXoScummVM, eXoDemoScene, eXoIF and eXoWin9x
   - Lite: eXoDOS (the official eXoDOS_Lite folder when present), eXoDREAMM, eXoScummVM and eXoWin9x without their games, with optional full copies of the projects that have no Lite version
-  - Offers the eXoDOS Media Pack when it is found
+  - Offers the eXoDOS Media Pack when it is found. In Lite mode it offers the Lite Media Pack, Full or None. Lite uses an eXoDOS Media Pack Lite folder next to the projects when there is one, otherwise it makes one in the new install
   - merge_eXo.bat /dryrun lists what would be copied without changing anything
 ### TODO
 - TBD

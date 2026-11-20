@@ -76,9 +76,17 @@ if not defined type_DOS goto askdest
 if not exist "%base%\eXoDOS Media Pack\eXoDOS\Content\" goto askdest
 echo.
 echo The eXoDOS Media Pack (books, magazines, catalogs, soundtracks and videos) was found.
+if %mode%==Lite if exist "%repo%\eXoDOS_MediaLite\make_media_lite.ps1" goto askmedialite
 echo It is about 240 GB.
 choice /C YN /M "Include the eXoDOS Media Pack"
-if errorlevel 2 (set media=false) else (set media=true)
+if errorlevel 2 (set media=false) else (set media=full)
+goto askdest
+:askmedialite
+echo   [L]ite - about 2 GB. Each item is copied from the share the first time you open it.
+echo   [F]ull - about 240 GB.
+echo   [N]one
+choice /C LFN /M "Which Media Pack"
+if errorlevel 3 (set media=false) else if errorlevel 2 (set media=full) else (set media=lite)
 
 :askdest
 set tries=0
@@ -120,7 +128,8 @@ echo Projects:     %base%
 echo Destination:  %dest%
 echo.
 for %%P in (%projects%) do call :show %%P
-if %media%==true echo   eXoDOS Media Pack
+if %media%==full echo   eXoDOS Media Pack - full copy
+if %media%==lite echo   eXoDOS Media Pack Lite - items are copied from %base%\eXoDOS Media Pack when opened
 echo.
 echo Setup eXo%last%.bat will run after the copy.
 echo.
@@ -135,11 +144,12 @@ if %dryrun%==false if not exist "%dest%\" (
 set failed=
 for %%P in (%projects%) do call :copy %%P
 if defined failed goto failed
-if %media%==true (
+if %media%==full (
 	echo.
 	echo ===== eXoDOS Media Pack =====
 	call :rc "%base%\eXoDOS Media Pack\eXoDOS" "%dest%"
 )
+if %media%==lite call :medialite
 if defined failed goto failed
 if %mode%==Lite for %%P in (%projects%) do call :overlay %%P
 if defined failed goto failed
@@ -169,6 +179,10 @@ if %mode%==Lite (
 	echo Restoring the NAS scripts and share settings...
 	for %%P in (%projects%) do call :overlay %%P
 	for %%P in (%projects%) do call :conf %%P
+)
+if %media%==lite (
+	>"%dest%\eXo\util\nas_media.conf" echo %base%\eXoDOS Media Pack\eXoDOS
+	echo   Media Pack: %base%\eXoDOS Media Pack\eXoDOS
 )
 if defined failed goto failed
 echo.
@@ -298,6 +312,22 @@ if "%1"=="DOS" (set "conf=nas.conf") else (set "conf=nas_eXo%1.conf")
 if not exist "%dest%\eXo\util\" md "%dest%\eXo\util"
 >"%dest%\eXo\util\%conf%" echo %base%\eXo%1
 echo   eXo%1 games: %base%\eXo%1
+exit /B
+
+:medialite
+echo.
+echo ===== eXoDOS Media Pack Lite =====
+rem Use a ready-made Lite pack when there is one, otherwise make it from the full Media Pack
+if exist "%base%\eXoDOS Media Pack Lite\Content\DOSMagazines.zip" (
+	call :rc "%base%\eXoDOS Media Pack Lite\Content" "%dest%\Content"
+	exit /B
+)
+if %dryrun%==true (
+	powershell -NoProfile -ExecutionPolicy Bypass -File "%repo%\eXoDOS_MediaLite\make_media_lite.ps1" -Source "%base%\eXoDOS Media Pack\eXoDOS" -Report
+) else (
+	powershell -NoProfile -ExecutionPolicy Bypass -File "%repo%\eXoDOS_MediaLite\make_media_lite.ps1" -Source "%base%\eXoDOS Media Pack\eXoDOS" -Dest "%dest%"
+)
+if errorlevel 1 set failed=1
 exit /B
 
 :rc
